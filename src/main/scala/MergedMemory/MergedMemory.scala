@@ -1,3 +1,13 @@
+package UnifiedMemory
+import chisel3._
+import chisel3.util._
+import config.{IMEMsetupSignals, DMEMsetupSignals, MemUpdates}
+import chisel3.experimental.{ChiselAnnotation, annotate}
+import chisel3.util.experimental.loadMemoryFromFileInline
+import firrtl.annotations.{Annotation, MemorySynthInit}
+
+
+
 class UnifiedMemory(memFile: String) extends Module {
   val testHarness = IO(new Bundle {
     val imemSetup = Input(new IMEMsetupSignals)
@@ -25,6 +35,8 @@ class UnifiedMemory(memFile: String) extends Module {
 
   val memory = SyncReadMem(2097152, UInt(32.W)) // sizes merged, next power of to //?
   loadMemoryFromFileInline(memory, memFile)
+
+    testHarness.requestedAddressIMEM := io.instAddr
 
   // Instruction Address Source
   val instAddrSource = Wire(UInt(32.W))
@@ -54,7 +66,7 @@ class UnifiedMemory(memFile: String) extends Module {
 
   // Handle testHarness output
   // Instr 
-  testHarness.requestedInstructionAddress := instAddrSource
+  
   // Data
   testHarness.testUpdatesDMEM.writeEnable      := writeEnableSource
   testHarness.testUpdatesDMEM.readEnable       := readEnableSource
@@ -74,8 +86,8 @@ class UnifiedMemory(memFile: String) extends Module {
   
   // Write to memory Data
   when(writeEnableSource) {
-    memory(dataAddrSource(31,2)) := dataInSource
-  }
+    memory(dataAddrSource) := dataInSource
+  }//!dataAddrSource(31,2)??
 
   // Read from memory
   io.dataOut := memory(dataAddrSource)
