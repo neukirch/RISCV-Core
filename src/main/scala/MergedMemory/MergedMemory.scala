@@ -33,8 +33,16 @@ class UnifiedMemory(memFile: String) extends Module {
     override def toFirrtl = MemorySynthInit
   })
 
+
   val memory = SyncReadMem(2097152, UInt(32.W)) // sizes merged, next power of to //?
   loadMemoryFromFileInline(memory, memFile)
+
+
+    val IMEM_BASE = "h00000000".U  //not used
+    val DMEM_BASE = "h00100000".U  // 1048576 offset
+    //?swap? // more?
+    val dataAccessAddr = (io.dataAddr - DMEM_BASE)//!(31, 2)??
+
 
     testHarness.requestedAddressIMEM := io.instAddr
 
@@ -53,12 +61,12 @@ class UnifiedMemory(memFile: String) extends Module {
   val readEnableSource   = Wire(Bool())
 
   when(testHarness.dmemSetup.setup) {
-    dataAddrSource    := testHarness.dmemSetup.dataAddress
+    dataAddrSource    := testHarness.dmemSetup.dataAddress //!- DMEM_BASE //!
     dataInSource      := testHarness.dmemSetup.dataIn
     writeEnableSource := testHarness.dmemSetup.writeEnable
     readEnableSource  := testHarness.dmemSetup.readEnable
   }.otherwise {
-    dataAddrSource    := io.dataAddr
+    dataAddrSource    := io.dataAddr //dataAccessAddr //!io.dataAddr
     dataInSource      := io.dataIn
     writeEnableSource := io.dataWriteEnable
     readEnableSource  := io.dataReadEnable
@@ -79,7 +87,7 @@ class UnifiedMemory(memFile: String) extends Module {
     memory(instAddrSource) := testHarness.imemSetup.instruction
   }
 
-  io.instOut := memory(instAddrSource(31,2))
+  io.instOut := memory(instAddrSource(31,2)) //?(31,2)
   //!instAddrSource??
   
   
