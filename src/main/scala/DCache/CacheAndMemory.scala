@@ -67,5 +67,8 @@ class CacheAndMemory extends Module{
 
   data_mem.io.instOut := DontCare
 
-
+  //!
+  dcache.io.miss := DontCare
+  dcache.io.hit := false.B
+  dcache.io.prefData := DontCare
 }

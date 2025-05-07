@@ -5,6 +5,8 @@ import config.{IMEMsetupSignals, DMEMsetupSignals, MemUpdates}
 import chisel3.experimental.{ChiselAnnotation, annotate}
 import chisel3.util.experimental.loadMemoryFromFileInline
 import firrtl.annotations.{Annotation, MemorySynthInit}
+import chisel3.experimental.annotate
+import firrtl.transforms.NoDedupAnnotation
 
 
 
@@ -29,9 +31,16 @@ class UnifiedMemory(memFile: String) extends Module {
     val dataOut         = Output(UInt(32.W))
   })
 
-  annotate(new ChiselAnnotation {
-    override def toFirrtl = MemorySynthInit
-  })
+//   annotate(new ChiselAnnotation {
+//     override def toFirrtl = MemorySynthInit
+//   })
+//annotate(new MemoryFileInlineAnnotation(memory, memFile, "Hex"))
+//TODO ?????
+val self = this
+annotate(new ChiselAnnotation {
+  override def toFirrtl = NoDedupAnnotation(self.toNamed)
+})
+
 
 
   val memory = SyncReadMem(2097152, UInt(32.W)) // sizes merged, next power of to //?

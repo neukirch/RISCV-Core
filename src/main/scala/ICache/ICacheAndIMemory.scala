@@ -1,11 +1,12 @@
 package ICache
 
 import DCache.Cache
+import Prefetcher.Prefetcher
 import UnifiedMemory.UnifiedMemory
 import chisel3._
 import config.IMEMsetupSignals
 
-class ICacheAndIMemory (I_memoryFile: String) extends Module {
+class ICacheAndIMemory (I_memoryFile: String, cacheOnly : Boolean = true) extends Module {
   val testHarness = IO(
     new Bundle {
       val setupSignals     = Input(new IMEMsetupSignals)
@@ -23,6 +24,16 @@ class ICacheAndIMemory (I_memoryFile: String) extends Module {
   //val imem = Module(new InstructionMemory(I_memoryFile))
   val imem = Module(new UnifiedMemory(I_memoryFile))
   val icache = Module(new Cache("src/main/scala/ICache/ICacheContent.bin", read_only = true))
+  val pref = Module(new Prefetcher(I_memoryFile, cacheOnly))
+
+  //Prefetcher signals
+  pref.io.missAddress :=   io.instr_addr
+  pref.io.cacheBusy   :=   icache.io.busy
+  pref.io.miss        :=   icache.io.miss
+  icache.io.hit       :=   pref.io.hit
+  icache.io.prefData  :=   pref.io.result
+
+
 
   icache.io.read_en := true.B // Always reading for instruction cache
   icache.io.data_addr := io.instr_addr
