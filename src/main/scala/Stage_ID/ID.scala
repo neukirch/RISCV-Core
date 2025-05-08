@@ -18,6 +18,7 @@ import GPR.ByPassReg
 import Decode.Decode
 import config.ImmFormat._
 import config.{ALUOps}
+import config.Inst._
 
 import config.{RegisterSetupSignals, RegisterUpdates, Instruction, ControlSignals}
 class ID extends Module
@@ -49,6 +50,13 @@ class ID extends Module
       val readData1            = Output(UInt())
       val readData2            = Output(UInt())
 
+
+
+      val inPC              = Input(UInt(32.W))
+      val isADDI      = Output(Bool())
+
+
+      val stall_load_ex           = Input(Bool()) //!4.4.
     }
   )
 
@@ -56,6 +64,9 @@ class ID extends Module
   val decoder   = Module(new Decode).io
   val bypassRs1 = Module(new ByPassReg).io
   val bypassRs2 = Module(new ByPassReg).io
+
+  //!
+  io.isADDI := decoder.isADDI
 
   val immData   = Wire(SInt())
 
@@ -68,8 +79,18 @@ class ID extends Module
   // Connect decoder and register signals //
   //////////////////////////////////////////
 
+  //!4.4. io.instruction mit wire ausgetauscht um NOP einzufuegen bei stall load
+  val instructionWire   = Wire(new Instruction)
+  when(io.stall_load_ex){
+    instructionWire := io.instruction//NOP
+      printf(p"ID stall_load_ex --- NOP\n")
+      printf(p"\n")
+  }.otherwise{
+    instructionWire := io.instruction
+  }  
   //Connect instruction to decoder
-  decoder.instruction := io.instruction
+  //!4.4. decoder.instruction := io.instruction
+  decoder.instruction := instructionWire
 
   //Connect decoded signals to outputs
   io.controlSignals := decoder.controlSignals
@@ -80,10 +101,10 @@ class ID extends Module
   io.ALUop          := decoder.ALUop
   
   //From instruction
-  registers.io.readAddress1 := io.instruction.registerRs1
-  registers.io.readAddress2 := io.instruction.registerRs2
+  registers.io.readAddress1 := instructionWire.registerRs1//!io.instruction.registerRs1
+  registers.io.readAddress2 := instructionWire.registerRs2//!io.instruction.registerRs2
 
-  //From EXbarrier
+  //From EXbarrier //!MEMBARRIER
   registers.io.writeEnable  := io.registerWriteEnable
   registers.io.writeAddress := io.registerWriteAddress
   registers.io.writeData    := io.registerWriteData
@@ -91,20 +112,23 @@ class ID extends Module
   //To IDBarrier
   // Bypass muxes, IF reading register which is currently being written
   // send the write value to IDBarrier instead of current register value
-  bypassRs1.readAddr     := io.instruction.registerRs1
+  bypassRs1.readAddr     := instructionWire.registerRs1//!io.instruction.registerRs1
   bypassRs1.writeAddr    := io.registerWriteAddress
   bypassRs1.writeEnable  := io.registerWriteEnable
   bypassRs1.registerData := registers.io.readData1
   bypassRs1.writeData    := io.registerWriteData
   io.readData1           := bypassRs1.outData
 
-  bypassRs2.readAddr     := io.instruction.registerRs2
+  bypassRs2.readAddr     := instructionWire.registerRs2//!io.instruction.registerRs2
   bypassRs2.writeAddr    := io.registerWriteAddress
   bypassRs2.writeEnable  := io.registerWriteEnable
   bypassRs2.registerData := registers.io.readData2
   bypassRs2.writeData    := io.registerWriteData
   io.readData2           := bypassRs2.outData
 
+
+  //printf(p"ID bypassRs1 io.readData1: 0x${Hexadecimal(bypassRs1.outData)}, writeData: 0x${Hexadecimal(io.registerWriteData)}, registerWriteEnable: ${io.registerWriteEnable}\n")
+  //printf(p"\n")
 
 
   ////////////////////////////
@@ -114,14 +138,31 @@ class ID extends Module
   //Create alu operations map
   val ImmOpMap = Array(
     //Key,       Value
-    ITYPE -> io.instruction.immediateIType,
-    STYPE -> io.instruction.immediateSType,
-    BTYPE -> io.instruction.immediateBType,
-    UTYPE -> io.instruction.immediateUType,
-    JTYPE -> io.instruction.immediateJType,
-    SHAMT -> io.instruction.immediateZType,
-    DC    -> io.instruction.immediateIType
+    ITYPE -> instructionWire.immediateIType,
+    STYPE -> instructionWire.immediateSType,
+    BTYPE -> instructionWire.immediateBType,
+    UTYPE -> instructionWire.immediateUType,
+    JTYPE -> instructionWire.immediateJType,
+    SHAMT -> instructionWire.immediateZType,
+    DC    -> instructionWire.immediateIType,
+    //!LITYPE -> io.instruction.immediateLIType //!
   )
+  // val ImmOpMap = Array(
+  //   //Key,       Value
+  //   ITYPE -> io.instruction.immediateIType,
+  //   STYPE -> io.instruction.immediateSType,
+  //   BTYPE -> io.instruction.immediateBType,
+  //   UTYPE -> io.instruction.immediateUType,
+  //   JTYPE -> io.instruction.immediateJType,
+  //   SHAMT -> io.instruction.immediateZType,
+  //   DC    -> io.instruction.immediateIType,
+  //   //!LITYPE -> io.instruction.immediateLIType //!
+  // )
+
+  // printf(p"ID instruction: 0x${Hexadecimal(io.instruction.asUInt)}, readData1: 0x${Hexadecimal(bypassRs1.outData)}, readData2: 0x${Hexadecimal(bypassRs1.outData)}\n")
+  // printf(p"bypassRs1.registerData: 0x${Hexadecimal(registers.io.readData1)}, bypassRs1.writeData: 0x${Hexadecimal(io.registerWriteData)}\n")
+  // printf(p"bypassRs2.registerData: 0x${Hexadecimal(registers.io.readData2)}, bypassRs2.writeData: 0x${Hexadecimal(io.registerWriteData)}\n")
+  // printf(p"\n")
 
   //Set immData
   immData := MuxLookup(io.immType, 0.S(32.W), ImmOpMap)
@@ -133,8 +174,14 @@ class ID extends Module
       io.immData := immData.asUInt
       //io.ALUop   := ALUOps.ADD
   //printf(p"ID instruction: 0x${Hexadecimal(io.instruction.asUInt)}, LUI readData1: 0x${Hexadecimal(io.readData1.asUInt)}, immData: 0x${Hexadecimal(immData.asUInt)}\n")
+  }.elsewhen(decoder.ALUop === ALUOps.AUIPC){
+      io.readData1 := io.inPC
+      io.immData := immData.asUInt
+      //io.ALUop   := ALUOps.ADD
+  //printf(p"ID instruction: 0x${Hexadecimal(io.instruction.asUInt)}, LUI readData1: 0x${Hexadecimal(io.readData1.asUInt)}, immData: 0x${Hexadecimal(immData.asUInt)}\n")
   }.otherwise{
       io.immData := Cat(Fill(16, immData(15)), immData(15,0)).asUInt
   }
-  
+  // printf(p"ID memToReg: 0x${Hexadecimal(io.controlSignals.memToReg)}, regWrite: 0x${Hexadecimal(io.controlSignals.regWrite)}, memRead: 0x${Hexadecimal(io.controlSignals.memRead)}, memWrite: 0x${Hexadecimal(io.controlSignals.memWrite)}\n")
+  // printf(p"\n")
 }

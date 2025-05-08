@@ -41,18 +41,35 @@ clean:
 
 
 
+# run-binary-debug:
+# 	@echo "--------------------Change mem entry in IF.scala line 76--------------------"
+# 	@echo "Convert ELF to binary"
+# 	$(RISCV)objcopy -O binary $(BINARY) $(BINARY_NOEXT).bin
+
+# 	@echo "Convert binary to pure hex (one 32-bit instruction per line)"
+# 	python3 bin2hex.py $(BINARY_NOEXT).bin > $(HEX)
+# 	$(RISCV)objdump -d $(BINARY) > $(DUMP)
+
+# 	@echo "Load .hex into memory"
+# 	@echo "Loaded $(HEX) into $(MEM_FILE)"
+# 	cp $(HEX) $(MEM_FILE)
+	
+# 	@echo "Running main_tb, change in Makefile for other testbenches"
+# 	sbt "testOnly main_tb.main_tb"
+
 run-binary-debug:
 	@echo "--------------------Change mem entry in IF.scala line 76--------------------"
 	@echo "Convert ELF to binary"
 	$(RISCV)objcopy -O binary $(BINARY) $(BINARY_NOEXT).bin
 
-	@echo "Convert binary to pure hex (one 32-bit instruction per line)"
+	@echo "Convert binary to hex"
 	python3 bin2hex.py $(BINARY_NOEXT).bin > $(HEX)
+
+	@echo "Dump ELF disassembly"
 	$(RISCV)objdump -d $(BINARY) > $(DUMP)
 
 	@echo "Load .hex into memory"
-	@echo "Loaded $(HEX) into $(MEM_FILE)"
 	cp $(HEX) $(MEM_FILE)
 	
-	@echo "Running main_tb, change in Makefile for other testbenches"
+	@echo "Running main_tb"
 	sbt "testOnly main_tb.main_tb"

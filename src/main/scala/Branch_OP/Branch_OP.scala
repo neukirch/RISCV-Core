@@ -32,60 +32,70 @@ class Branch_OP extends Module {
     is(beq) {
       io.branchTaken := (lhs === rhs)
       when(lhs === rhs){
-          printf(p"BEQ TAKEN lhs=rhs, lhs: ${lhs}, rhs: ${rhs}\n")
+            printf(p"BEQ TAKEN lhs=rhs, lhs: 0x${Hexadecimal(lhs)}, rhs: 0x${Hexadecimal(rhs)}\n")
+            printf(p"\n")
       }.otherwise{
-          printf(p"BEQ NOT TAKEN lhs!=rhs, lhs: ${lhs}, rhs: ${rhs}\n")
+            printf(p"BEQ NOT TAKEN lhs!=rhs, lhs: 0x${Hexadecimal(lhs)}, rhs: 0x${Hexadecimal(rhs)}\n")
+            printf(p"\n")
       }
     }
     is(neq) {
       io.branchTaken := (lhs =/= rhs)
       when(lhs =/= rhs){
-          printf(p"NEQ/BNE TAKEN lhs!=rhs, lhs: ${lhs}, rhs: ${rhs}\n")
+            printf(p"NEQ/BNE TAKEN lhs!=rhs, lhs: 0x${Hexadecimal(lhs)}, rhs: 0x${Hexadecimal(rhs)}\n")
+            printf(p"\n")
       }.otherwise{
-          printf(p"NEQ/BNE NOT TAKEN lhs=rhs, lhs: ${lhs}, rhs: ${rhs}\n")
+            printf(p"NEQ/BNE NOT TAKEN lhs=rhs, lhs: 0x${Hexadecimal(lhs)}, rhs: 0x${Hexadecimal(rhs)}\n")
+            printf(p"\n")
       }
     }
     is(gte) {
       io.branchTaken := (lhs >= rhs)
       when(lhs >= rhs){
-          printf(p"GTE TAKEN lhs>=rhs, lhs: ${lhs}, rhs: ${rhs}\n")
+            printf(p"GTE TAKEN lhs>=rhs, lhs: 0x${Hexadecimal(lhs)}, rhs: 0x${Hexadecimal(rhs)}\n")
+            printf(p"\n")
       }.otherwise{
-          printf(p"GTE NOT TAKEN lhs<rhs, lhs: ${lhs}, rhs: ${rhs}\n")
+            printf(p"GTE NOT TAKEN lhs<rhs, lhs: 0x${Hexadecimal(lhs)}, rhs: 0x${Hexadecimal(rhs)}\n")
+            printf(p"\n")
       }
     }
     is(lt) {
       io.branchTaken := (lhs < rhs)
       when(lhs < rhs){
-          printf(p"LT TAKEN lhs<rhs, lhs: ${lhs}, rhs: ${rhs}\n")
+            printf(p"LT TAKEN lhs<rhs, lhs: 0x${Hexadecimal(lhs)}, rhs: 0x${Hexadecimal(rhs)}\n")
+            printf(p"\n")
       }.otherwise{
-          printf(p"LT NOT TAKEN lhs>=rhs, lhs: ${lhs}, rhs: ${rhs}\n")
+            printf(p"LT NOT TAKEN lhs>=rhs, lhs: 0x${Hexadecimal(lhs)}, rhs: 0x${Hexadecimal(rhs)}\n")
+            printf(p"\n")
       }
     }
     is(gteu) {
       io.branchTaken := (lhs.asUInt >= rhs.asUInt)
       when(lhs.asUInt >= rhs.asUInt){
-          printf(p"GTEU TAKEN lhs>=rhs, lhs: ${lhs.asUInt}, rhs: ${rhs.asUInt}\n")
+            printf(p"GTEU TAKEN lhs>=rhs, lhs: 0x${Hexadecimal(lhs.asUInt)}, rhs: 0x${Hexadecimal(rhs.asUInt)}\n")
+            printf(p"\n")
       }.otherwise{
-          printf(p"GTEU NOT TAKEN lhs<hs, lhs: ${lhs.asUInt}, rhs: ${rhs.asUInt}\n")
+            printf(p"GTEU NOT TAKEN lhs<hs, lhs: 0x${Hexadecimal(lhs.asUInt)}, rhs: 0x${Hexadecimal(rhs.asUInt)}\n")
+            printf(p"\n")
       }
     }
     is(ltu) {
       io.branchTaken := (lhs.asUInt < rhs.asUInt)
       when(lhs.asUInt < rhs.asUInt){
-          printf(p"LTU TAKEN lhs<rhs, lhs: ${lhs.asUInt}, rhs: ${rhs.asUInt}\n")
+            printf(p"LTU TAKEN lhs<rhs, lhs: 0x${Hexadecimal(lhs.asUInt)}, rhs: 0x${Hexadecimal(rhs.asUInt)}\n")
+            printf(p"\n")
       }.otherwise{
-          printf(p"LTU NOT TAKEN lhs>=rhs, lhs: ${lhs.asUInt}, rhs: ${rhs.asUInt}\n")
+                printf(p"LTU NOT TAKEN lhs>=rhs, lhs: 0x${Hexadecimal(lhs.asUInt)}, rhs: 0x${Hexadecimal(rhs.asUInt)}\n")
+            printf(p"\n")
       }
     }
     is(jump) {
       io.branchTaken := (1.U)
-        printf(p"JUMP\n")
+            printf(p"JUMP\n")
+            printf(p"\n")
     }
     is(DC) {
       io.branchTaken := (0.U)
-        printf(p"DC\n")
     }
   }
-
-
 }

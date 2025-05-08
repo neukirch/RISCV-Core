@@ -16,7 +16,7 @@ import chisel3.util._
 import config.{ControlSignals, IMEMsetupSignals, Inst, Instruction}
 import config.Inst._
 
-class IF(BinaryFile: String) extends Module
+class IF extends Module
 {
 
   val testHarness = IO(
@@ -71,9 +71,10 @@ class IF(BinaryFile: String) extends Module
 
   val BTB               = Module(new BTB_direct)
   val nextPC            = WireInit(UInt(), 0.U)
-  //!val PC                = RegInit(UInt(32.W), 0.U)
+  //val PC                = RegInit(UInt(32.W), 0.U)
   //TODO Change here to skip priviledged instructions
-  val PC                = RegInit(UInt(32.W), 252.U) //add -> 244, beq -> 252, bge -> 252, bgeu -> 252, blt -> 252, bltu -> 252, bne -> 252
+  val PC                = RegInit(UInt(32.W), 256.U) 
+  //add -> 244, beq -> 252, bge -> 252, bgeu -> 252, blt -> 252, bltu -> 252, bne -> 252, lw -> 256, sw ->  256
   val PCplus4           = Wire(UInt(32.W))
   val instruction       = Wire(new Instruction)
   val branch            = WireInit(Bool(), false.B)

@@ -64,11 +64,11 @@ class Cache (CacheFile: String, read_only: Boolean = false) extends Module{
 
   val compareReg = RegInit(false.B)
 
-
   switch(stateReg) {
     
     
     is(idle) {
+        printf(p"DCache idle, request address: 0x${Hexadecimal(io.data_addr)}, read_en ${io.read_en}\n")
       when(io.read_en || io.write_en.getOrElse(false.B)) {
         compareWire := true.B
         write_en_wire := io.write_en.getOrElse(false.B)
@@ -108,11 +108,12 @@ class Cache (CacheFile: String, read_only: Boolean = false) extends Module{
           io.valid := true.B
           when(read_en_wire && compareReg) {
             io.data_out := data_element(31, 0)
-            
+              printf(p"DCache valid output 1 0x${Hexadecimal(io.data_out)}\n")
           }.elsewhen{read_en_wire}{
             io.data_out := data_element_wire(31, 0)
-            
+              printf(p"DCache valid output 1 0x${Hexadecimal(io.data_out)}\n")
           }
+        
           if(!read_only) {
             when(write_en_wire || write_en_reg) {
               val temp = Wire(Vec(58, Bool()))
@@ -167,11 +168,14 @@ class Cache (CacheFile: String, read_only: Boolean = false) extends Module{
         io.mem_data_addr := temp.asUInt
         io.mem_data_in := data_element(31, 0) // write the data in the dirty element to the memory
         stateReg := allocate
+          printf(p"DCache writeback 0x${Hexadecimal(data_element(31, 0))} to address  0x${Hexadecimal(temp.asUInt)}, shifted: 0x${Hexadecimal(temp.asUInt >> 2)}\n")
+      }.otherwise{
+          printf(p"DCache writeback no memory granted\n")
       }
+      
     }
 
     is(allocate) {
-      
       when(statecount) {
         statecount := false.B
         io.mem_read_en := false.B
@@ -189,18 +193,19 @@ class Cache (CacheFile: String, read_only: Boolean = false) extends Module{
 
         compareReg := true.B
         stateReg := idle
+          printf(p"DCache allocate 2 0x${Hexadecimal(io.mem_data_out)}\n")
       }.otherwise {
-        
         io.mem_read_en := true.B
         io.mem_write_en := false.B
         io.mem_data_addr := data_addr_reg
         when(io.mem_granted){
           statecount := true.B
         }
+          printf(p"DCache allocate 1 to address  0x${Hexadecimal(data_addr_reg)}\n")
 
       }
     }
 
   }
-
+    printf(p"\n")
 }

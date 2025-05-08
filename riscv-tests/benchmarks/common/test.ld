@@ -13,7 +13,6 @@
 
 OUTPUT_ARCH( "riscv" )
 ENTRY(_start)
-//ENTRY(test_2)
 
 /*----------------------------------------------------------------------*/
 /* Sections                                                             */
@@ -23,7 +22,7 @@ SECTIONS
 {
 
   /* text: test code section */
-  . = 0x00000000;
+  . = 0x80000000;
   .text.init : { *(.text.init) }
 
   . = ALIGN(0x1000);

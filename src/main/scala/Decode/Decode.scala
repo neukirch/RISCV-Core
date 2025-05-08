@@ -31,6 +31,8 @@ class Decode extends Module {
     val op2Select      = Output(UInt(1.W))
     val immType        = Output(UInt(3.W))
     val ALUop          = Output(UInt(5.W))
+
+    val isADDI      = Output(Bool())
   })
 
   val N = 0.asUInt(1.W)
@@ -41,6 +43,7 @@ class Decode extends Module {
 
     // Mem instructions
     LW     -> List(Y,        Y,        Y,       N,        N,       N,    branch_types.DC, rs1,       imm,       ITYPE,        ALUOps.ADD),
+    //!LW     -> List(Y,        Y,        Y,       N,        N,       N,    branch_types.DC, rs1,       rs2,       ImmFormat.DC,        ALUOps.LW),
     SW     -> List(N,        N,        N,       Y,        N,       N,    branch_types.DC, rs1,       imm,       STYPE,        ALUOps.ADD),
 
 
@@ -57,7 +60,7 @@ class Decode extends Module {
 
     // Imm instructions
     LUI    -> List(N,        Y,        N,       N,        N,       N,    branch_types.DC, rs1,       imm,       UTYPE,        ALUOps.LUI),
-    AUIPC  -> List(N,        Y,        N,       N,        N,       N,    branch_types.DC, rs1,       imm,       UTYPE,        ALUOps.ADD),
+    AUIPC  -> List(N,        Y,        N,       N,        N,       N,    branch_types.DC, rs1,       imm,       UTYPE,        ALUOps.AUIPC),
 
     // Shifts
     SRA    -> List(N,        Y,        N,       N,        N,       N,    branch_types.DC, rs1,       rs2,       ImmFormat.DC, ALUOps.SRA),
@@ -121,11 +124,33 @@ class Decode extends Module {
   io.immType    := decodedControlSignals(9)
   io.ALUop      := decodedControlSignals(10)
 
-  when(decodedControlSignals(10) === ALUOps.LUI){
-  //printf(p"DECODE LUI\n")
+  io.isADDI := false.B
+  when(decodedControlSignals(0) === N &&
+    decodedControlSignals(1) === Y &&
+    decodedControlSignals(2) === N &&
+    decodedControlSignals(3) === N &&
+    decodedControlSignals(4) === N &&
+    decodedControlSignals(5) === N &&
+    decodedControlSignals(6) === branch_types.DC &&
+    decodedControlSignals(7) === rs1 &&
+    decodedControlSignals(8) === imm &&
+    decodedControlSignals(9) === ITYPE && 
+    decodedControlSignals(10) === ALUOps.ADD){
+    io.isADDI := true.B
+    // printf(p"---------------------------------------------\n")
+    // printf(p"---------------------------------------------\n")
+    // printf(p"---------------------------------------------\n")
+    // printf(p"---------------------------------------------\n")
+    // printf(p"---------------------------------------------\n")
+    // printf(p"---------------------------------------------\n")
+    // printf(p"---------------------------------------------\n")
+    // printf(p"---------------------------------------------\n")
+    // printf(p"---------------------------------------------\n")
+    // printf(p"---------------------------------------------\n")
+    // printf(p"---------------------------------------------\n")
   }
+
   
-
-
-//printf(p"Decode op1Select: 0x${Hexadecimal(decodedControlSignals(7))}, op2Select: 0x${Hexadecimal(decodedControlSignals(8))}, ALUop: 0x${Hexadecimal(decodedControlSignals(10))}\n")
+  // printf(p"Decode memToReg: ${Hexadecimal(decodedControlSignals(0))}, WriteToReg: ${Hexadecimal(decodedControlSignals(1))}, memRead: ${Hexadecimal(decodedControlSignals(2))}, WriteToMem: ${Hexadecimal(decodedControlSignals(3))}, ALUop: ${decodedControlSignals(10)}, src1: 0x${Hexadecimal(decodedControlSignals(7))}, src2: 0x${Hexadecimal(decodedControlSignals(8))}\n")
+  // printf(p"\n")
 }

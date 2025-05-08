@@ -64,17 +64,48 @@ class registerFile extends Module
   testHarness.testUpdates.writeEnable := writeEnable
   testHarness.testUpdates.writeAddress := writeAddress
 
-
+  // printf(p"\n")
   when(writeEnable){
     when(writeAddress =/= 0.U){
       registerFile(writeAddress) := writeData
+      when(writeAddress === 1.U){
+        printf(p"registerFile writeData: 0x${Hexadecimal(writeData)} at ra\n")
+      }.elsewhen(writeAddress === 4.U){
+        printf(p"registerFile writeData: 0x${Hexadecimal(writeData)} at tp\n")
+      }.elsewhen(writeAddress === 5.U){
+        printf(p"registerFile writeData: 0x${Hexadecimal(writeData)} at t0\n")
+      }.elsewhen(writeAddress === 6.U){
+        printf(p"registerFile writeData: 0x${Hexadecimal(writeData)} at t1\n")
+      }.elsewhen(writeAddress === 29.U){
+        printf(p"registerFile writeData: 0x${Hexadecimal(writeData)} at t4\n")
+      }.elsewhen(writeAddress === 30.U){
+        printf(p"registerFile writeData: 0x${Hexadecimal(writeData)} at t5\n")
+      }.elsewhen(writeAddress === 3.U){
+        printf(p"registerFile writeData: 0x${Hexadecimal(writeData)} at gp\n")
+      }.otherwise{
+        printf(p"registerFile write somewhere else writeData: 0x${Hexadecimal(writeData)}\n")
+      }
+    }.otherwise{
+      printf(p"registerFile write at 0 writeData: 0x${Hexadecimal(writeData)}\n")
     }
+  }.otherwise{
+    printf(p"registerFile no writeEnable with writeData: 0x${Hexadecimal(writeData)}\n")
   }
+  printf(p"\n")
 
 
   io.readData1 := 0.U
   io.readData2 := 0.U
-  when(readAddress1 =/= 0.U){ io.readData1 := registerFile(readAddress1) }
-  when(readAddress2 =/= 0.U){ io.readData2 := registerFile(readAddress2) }
+  when(readAddress1 =/= 0.U){ io.readData1 := registerFile(readAddress1) 
+   //
+   printf(p"registerFile read at readAddress1 ${readAddress1}: 0x${Hexadecimal(io.readData1)}\n")}
+  when(readAddress2 =/= 0.U){ io.readData2 := registerFile(readAddress2) 
+   //
+   printf(p"registerFile read at readAddress2 ${readAddress2}: 0x${Hexadecimal(io.readData2)}\n")}
+
+
+   printf(p"registerFile ra 0x${Hexadecimal(registerFile(1))}, t4 0x${Hexadecimal(registerFile(29))}, t5 0x${Hexadecimal(registerFile(30))}, gp 0x${Hexadecimal(registerFile(3))}\n")
+   printf(p"registerFile tp 0x${Hexadecimal(registerFile(4))} t0 0x${Hexadecimal(registerFile(5))}, t1 0x${Hexadecimal(registerFile(6))}, x0 0x${Hexadecimal(registerFile(0))}\n")
+   printf(p"\n")
 
 }

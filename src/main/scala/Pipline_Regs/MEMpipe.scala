@@ -20,16 +20,27 @@ class MEMpipe extends Module
     new Bundle {
       //val inPCBranch      = Input(UInt())
       val inControlSignals  = Input(new ControlSignals)
-      val inRd              = Input(UInt())
-      val inMEMData         = Input(UInt())
-      val inALUResult       = Input(UInt())
+      val inRd              = Input(UInt(32.W))
+      val inMEMData         = Input(UInt(32.W))
+      val inALUResult       = Input(UInt(32.W))
       val stall             = Input(Bool())
-      val outMEMData        = Output(UInt())
+      val outMEMData        = Output(UInt(32.W))
       val outControlSignals = Output(new ControlSignals)
-      val outRd             = Output(UInt())
-      val outALUResult      = Output(UInt())
+      val outRd             = Output(UInt(32.W))
+      val outALUResult      = Output(UInt(32.W))
+
+
+      val inPC      = Input(UInt(32.W))
+      val outPC      = Output(UInt(32.W))
+
+
+      val stall_load_ex             = Input(Bool())
     }
   )
+  val pcReg             = RegEnable(io.inPC, 0.U, !io.stall) //RegInit(UInt(), 0.U)
+  io.outPC := pcReg
+
+
 
   val ALUResultReg      = RegEnable(io.inALUResult, 0.U, !io.stall) //RegInit(UInt(), 0.U)
   val controlSignalsReg = RegEnable(io.inControlSignals, !io.stall) //Reg(new ControlSignals)
@@ -42,9 +53,30 @@ class MEMpipe extends Module
   io.outRd             := rdReg
 
   //MEM data
-  io.outMEMData        := io.inMEMData
+  val memDataReg        = RegEnable(io.inMEMData, 0.U, !io.stall)
+  io.outMEMData        := memDataReg
+  // val memDataReg        = RegEnable(io.inMEMData, 0.U, !io.stall)
+  // val bufferReg = RegEnable(memDataReg, 0.U, !io.stall)//RegInit(io.inMEMData)
+  // //bufferReg := memDataReg
+  // // when(memDataReg === 0.U){
+  // //   io.outMEMData        := io.inMEMData
+  // // }.otherwise{
+  // //   io.outMEMData        := memDataReg
+  // // }
+  // when(bufferReg === 0.U){
+  //   io.outMEMData        := io.inMEMData//memDataReg
+  // }.otherwise{
+  //   io.outMEMData        := bufferReg
+  // }
+
+  //!io.outMEMData        := io.inMEMData
 
   //ALU result register
   io.outALUResult      := ALUResultReg
+  
+  // printf(p"MEMBarrier io.inALUResult 0x${Hexadecimal(io.inALUResult)}, io.inRd ${io.inRd},  io.inMEMData 0x${Hexadecimal(io.inMEMData)}, io.stall ${io.stall}, in_memToReg ${io.inControlSignals.memToReg}\n")
+  // printf(p"MEMBarrier ALUResultReg 0x${Hexadecimal(ALUResultReg)}, rdReg ${rdReg},  io.outMEMData 0x${Hexadecimal(io.outMEMData)}, memToRegRegister ${controlSignalsReg.memToReg}\n")
+  //printf(p"MEMBarrier io.outALUResult 0x${Hexadecimal(io.outALUResult)}, io.outRd ${io.outRd},  io.outMEMData 0x${Hexadecimal(io.outMEMData)}, out_memToReg ${io.outControlSignals.memToReg}\n")
+  //printf(p"\n")
 
 }

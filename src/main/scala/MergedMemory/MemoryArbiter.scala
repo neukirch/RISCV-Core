@@ -63,18 +63,22 @@ val io = IO(new Bundle {
     mem.io.addr := io.dAddr
     mem.io.write := io.dWrite
     mem.io.wdata := io.dData
+    //printf(p"ARBITER data memory read 0x${Hexadecimal(io.dAddr >> 2)} not shifted 0x${Hexadecimal(io.dAddr)}, PC: ${(io.dAddr / 4.U) + 1.U}\n")
   }.otherwise{// IPref last
     mem.io.req := true.B
     mem.io.addr := io.pref_addr
     mem.io.write := false.B
     mem.io.wdata := 0.U
+    //printf(p"ARBITER instruction memory read 0x${Hexadecimal(io.pref_addr >> 2)} not shifted 0x${Hexadecimal(io.pref_addr)}, PC: ${(io.pref_addr / 4.U) + 1.U}\n")
   }
-
+  
   //set outputs to caches
   io.dataRead := mem.io.dataRead
   io.grantData := io.dReq
+  //printf(p"ARBITER memory read: 0x${Hexadecimal(mem.io.dataRead)}, io.grantData: ${io.grantData}\n")
 
 
+  //printf(p"\n")
   //test harness //TODO
   mem.testHarness.dmemSetup.setup := 0.B
   mem.testHarness.dmemSetup.dataIn := 0.U

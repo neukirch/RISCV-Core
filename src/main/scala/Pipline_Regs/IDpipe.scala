@@ -62,14 +62,43 @@ class IDpipe extends Module
       val outReadData1      = Output(UInt(32.W))
       val outReadData2      = Output(UInt(32.W))
 
-
+      // val IDBarrierLoad    = Output(Bool())//!
+      val isADDI      = Input(Bool())
+      val ADDIIDPipe      = Output(Bool())
     }
   )
+  // val load               = RegInit(io.inInstruction)
+  // when(io.outInstruction.opcode === "b0000011".U && io.outInstruction.func0 === "b010".U && load.opcode =/= io.outInstruction.opcode 
+  // && load.registerRd =/= io.outInstruction.registerRd  && load.registerRs1 =/= io.outInstruction.registerRs1 && load.registerRs2 =/= io.outInstruction.registerRs2
+  // && load.func1 =/= io.outInstruction.func1 && load.opcode =/= io.outInstruction.opcode && load.func0 =/= io.outInstruction.func0){
+  //   io.IDBarrierLoad := true.B
+  //   load := io.outInstruction
+  // }.otherwise{
+  //   io.IDBarrierLoad := false.B
+  // }
+  // val ADDIreg        = RegEnable(io.isADDI, !io.stall && io.inInstruction.opcode =/="b0110011".U && io.inInstruction.registerRd  === 0.U 
+  // && io.inInstruction.func0 === 0.U
+  // && io.inInstruction.registerRs1 === 0.U
+  // && io.inInstruction.registerRs2 === 0.U
+  // && io.inInstruction.func1 === 0.U)
+  // io.ADDIIDPipe := ADDIReg
+  val ADDIReg = RegEnable(io.isADDI, 
+                          !io.stall)
 
+  io.ADDIIDPipe := ADDIReg
 
+  when(ADDIReg || io.isADDI){
+    // printf(p"IDB stall ADDI xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx ${io.isADDI} reg ${ADDIReg}\n")
+    // printf(p"\n")
+    // printf(p"\n")
+    // printf(p"\n")
+    // printf(p"\n")
+    // printf(p"\n")
+    // printf(p"\n")
+  }
 
   //Decoder signal registers
-  val instructionReg        = RegEnable(io.inInstruction, !io.stall) //**
+  val instructionReg        = RegEnable(io.inInstruction, !io.stall ) //**
   val controlSignalsReg     = RegEnable(io.inControlSignals, !io.stall)
   val branchTypeReg         = RegEnable(io.inBranchType, branch_types.DC, !io.stall) // Initialize to No Branch. beq is encoded as 0!
   val PCReg                 = RegEnable(io.inPC, 0.U, !io.stall)
@@ -79,7 +108,9 @@ class IDpipe extends Module
   val rdReg                 = RegEnable(io.inRd, 0.U, !io.stall)
   val ALUopReg              = RegEnable(io.inALUop, 0.U, !io.stall)
   //Register signal registers
-  val readData1Reg          = RegEnable(io.inReadData1, 0.U, !io.stall)
+  //? removed =/= 0 for li instruction, because it didnt update rs1 to the value 0.U for x0 register
+  //!val readData1Reg          = RegEnable(io.inReadData1, 0.U, !io.stall && (io.inReadData1 =/= 0.U))
+  val readData1Reg          = RegEnable(io.inReadData1, 0.U, !io.stall) //!
   val readData2Reg          = RegEnable(io.inReadData2, 0.U, !io.stall)
   // BTB signals
   val btbHitReg        = RegInit(false.B)
@@ -116,4 +147,7 @@ class IDpipe extends Module
   //Register signals registers
   io.outReadData1      := readData1Reg
   io.outReadData2      := readData2Reg
+
+  // printf(p"IDBarrier io.inReadData1: 0x${Hexadecimal(io.inReadData1)}, readData1Reg: 0x${Hexadecimal(readData1Reg)}, stall: ${io.stall}, io.outReadData1: 0x${Hexadecimal(io.outReadData1)}\n")
+  // printf(p"\n")
 }

@@ -35,7 +35,13 @@ class ByPassReg extends Module
 
   when((io.readAddr =/= 0.U) & (io.readAddr === io.writeAddr) & io.writeEnable){
     io.outData := io.writeData
+    //printf(p"xxxxxxxxxxxxxxxxxxxxxxxxxxx FORWARD xxxxxxxxxxxxxxxxxxxxxxxxxxx\n")
+    //printf(p"GPR 1 0x${Hexadecimal(io.writeData)}\n")
+    //printf(p"\n")
   }.otherwise{
     io.outData := io.registerData
+    //printf(p"GPR 2 0x${Hexadecimal(io.registerData)}\n")
+    //printf(p"\n")
   }
+  
 }

@@ -31,6 +31,9 @@ object ALUOps {
   val COPY_B = 11.U(5.W)
   val DC     = 15.U(5.W)
   val LUI    = 25.U(5.W)
+  val AUIPC    = 24.U(5.W) //!
+  val LW    = 23.U(5.W) //!
+  //!val LI    = 26.U(5.W) //!????? 
 }
 
 object MDUOps {
@@ -75,6 +78,8 @@ object ImmFormat {
   val JTYPE  = 4.asUInt(3.W)
   val SHAMT  = 5.asUInt(3.W)
   val DC     = 0.asUInt(3.W)
+
+  //!val LITYPE  = 6.asUInt(3.W)//!
 }
 
 object ControlSignalsOB {
@@ -107,6 +112,9 @@ class Instruction extends Bundle(){
   // def immediateUType = Cat(0.U(12.W), instruction(31, 12)).asSInt
   def immediateJType = Cat(instruction(31), instruction(19, 12), instruction(20), instruction(30, 25), instruction(24, 21), 0.U(1.W)).asSInt
   def immediateZType = instruction(19, 15).zext
+
+  //!
+  //!def immediateLIType = instruction(31, 20).asSInt
 
   def bubble(): Instruction = {
     val bubbled = Wire(new Instruction)

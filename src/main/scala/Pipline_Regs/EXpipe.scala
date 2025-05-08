@@ -29,14 +29,48 @@ class EXpipe extends Module
       val outControlSignals = Output(new ControlSignals)
       val outRd             = Output(UInt())
       val outRs2            = Output(UInt())
+
+      val exLoadIn             = Input(Bool())
+      val exLoadOut            = Output(Bool())
+      val inPC              = Input(UInt(32.W))
+      val outPC             = Output(UInt(32.W))
+      val stall_load_ex             = Input(Bool())
     }
   )
+  val PCReg                 = RegEnable(io.inPC, 0.U, !io.stall)
+  io.outPC             := PCReg
 
+  //!
+  //keep all values constant if other stages are stalled because of a load-> also memb
+
+
+  //!3.4.
   val ALUResultReg      = RegEnable(io.inALUResult, 0.U, !io.stall) // should not be frozen?
   val controlSignalsReg = RegEnable(io.inControlSignals, !io.stall)
   val rdReg             = RegEnable(io.inRd, 0.U, !io.stall)
   val rs2Reg            = RegEnable(io.inRs2, 0.U, !io.stall)
+  // val ALUResultReg      = RegInit(io.inALUResult) // should not be frozen?
+  // val controlSignalsReg = RegInit(io.inControlSignals)
+  // val rdReg             = RegInit(io.inRd)
+  // val rs2Reg            = RegInit(io.inRs2)
+  // when(!io.stall){
+  //   ALUResultReg := io.inALUResult
+  //   controlSignalsReg := io.inControlSignals
+  //   rdReg := io.inRd
+  //   rs2Reg := io.inRs2
+  // }
+  val exLoad = RegInit(false.B)
+  //!3.4.
+  // exLoad  := io.exLoadIn
+  // io.exLoadOut := exLoad
 
+  val exLoadReg = RegEnable(io.exLoadIn, false.B, !io.stall)
+  io.exLoadOut := exLoadReg
+
+  when(io.exLoadOut){
+    //printf(p"EXB load: ${io.exLoadOut}\n")
+    //printf(p"\n")
+  }
 
   io.outControlSignals := controlSignalsReg
 
@@ -48,4 +82,7 @@ class EXpipe extends Module
 
   //ALU result register
   io.outALUResult        := ALUResultReg
+
+  //printf(p"EXBarrier io.stall ${io.stall}, io.outALUResult 0x${Hexadecimal(io.outALUResult)}, io.outRd ${io.outRd},  io.outRs2 0x${Hexadecimal(io.outRs2)}, memToReg ${io.outControlSignals.memToReg}\n")
+  //printf(p"\n")
 }

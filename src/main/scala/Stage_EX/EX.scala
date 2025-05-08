@@ -50,10 +50,38 @@ class EX extends Module {
       val branchTaken        = Output(Bool())
       val wrongAddrPred      = Output(Bool())
       val Rs2Forwarded       = Output(UInt(32.W))
+
+
+      //!
+      val exLoad      = Output(Bool())
+      //val dcacheread = Input(UInt(32.W))
+      //val dcachevalid = Input(Bool())
+      val isADDI      = Output(Bool())
+
+      //!8.3.
+      val outMEMDataMEMB      = Input(UInt(32.W))
     }
   )
 
+  val exLoad             = Wire(Bool())
+  when(io.controlSignals.memRead){
+    exLoad := true.B
+    // printf(p"EX load dcacheread: 0x${Hexadecimal(io.dcacheread)}\n")
+    // printf(p"\n")
+  }.otherwise{
+    exLoad := false.B
+    // printf(p"EX no load dcacheread: 0x${Hexadecimal(io.dcacheread)}\n")
+    // printf(p"\n")
+  }
+  io.exLoad := exLoad
+
+  io.isADDI := false.B
+  when(io.instruction.opcode === "b0010011".U && io.instruction.func0 === "b000".U && io.instruction.immediateIType === 0.S) { 
+    //io.isADDI := true.B
+  }
+
   val ALU                 = Module(new ALU).io
+
   val MDU                 = Module(new MDU).io
   val ResolveBranch       = Module(new Branch_OP).io
 
@@ -73,32 +101,44 @@ class EX extends Module {
   when(io.rs1Select === 1.asUInt(2.W)){
     alu_operand1         := io.ALUresultEXB
     ResolveBranch.src1   := io.ALUresultEXB
+    //printf(p"EX Forwarded rs1_select = 1 alu_operand1: 0x${Hexadecimal(io.ALUresultEXB)}\n")
   }
   .elsewhen(io.rs1Select === 2.asUInt(2.W)){
     alu_operand1         := io.ALUresultMEMB
     ResolveBranch.src1   := io.ALUresultMEMB
+    //printf(p"EX Forwarded rs1_select = 2 alu_operand1: 0x${Hexadecimal(io.ALUresultMEMB)}\n")
+  }
+  .elsewhen(io.rs1Select === 3.asUInt(2.W)){//!8.3.
+    alu_operand1         := io.outMEMDataMEMB
+    ResolveBranch.src1   := io.outMEMDataMEMB
+    //printf(p"EX Forwarded rs1_select = 3 alu_operand1: 0x${Hexadecimal(io.ALUresultMEMB)}\n")
   }
   .otherwise{
     alu_operand1         := io.rs1
     ResolveBranch.src1   := io.rs1
+    //printf(p"EX rs1_select = otherwise alu_operand1: 0x${Hexadecimal(io.rs1)}\n")
   }
 
+  // printf(p"EX alu_operand1 io.rs1: 0x${Hexadecimal(io.rs1)}, io.ALUresultMEMB: 0x${Hexadecimal(io.ALUresultMEMB)}, io.ALUresultEXB: 0x${Hexadecimal(io.ALUresultEXB)}\n")
 
   when(io.rs2Select === 1.asUInt(2.W)){
     alu_operand2         := io.ALUresultEXB
     ResolveBranch.src2   := io.ALUresultEXB
+    //printf(p"EX Forwarded rs2_select = 1 alu_operand1: 0x${Hexadecimal(io.ALUresultEXB)}\n")
   }
   .elsewhen(io.rs2Select === 2.asUInt(2.W)){
     alu_operand2         := io.ALUresultMEMB
     ResolveBranch.src2   := io.ALUresultMEMB
+    //printf(p"EX Forwarded rs2_select = 2 alu_operand2: 0x${Hexadecimal(io.ALUresultMEMB)}\n")
   }
   .otherwise{
     alu_operand2         := io.rs2
     ResolveBranch.src2   := io.rs2
+    //printf(p"EX rs2_select = otherwise alu_operand2: 0x${Hexadecimal(io.rs2)}\n")
   }
     //Operand 1, 2nd Mux
   when(io.op1Select === op1sel.PC){
-  ALU.src1    := io.PC
+    ALU.src1    := io.PC
   }.otherwise{
     ALU.src1    := alu_operand1
   }
@@ -107,7 +147,10 @@ class EX extends Module {
     ALU.src2    := alu_operand2
   }.otherwise{
     ALU.src2    := io.immData
+  //printf(p"EX alu_operand2 immediate: 0x${Hexadecimal(io.immData)} as signed int: ${io.immData.asSInt}\n")
   }
+
+  //printf(p"\n")
 
 
   //MDU
@@ -130,8 +173,10 @@ class EX extends Module {
   PCplus4 := io.PC + 4.U
   when(io.branchType === branch_types.jump){  // This is for jal, we need to place PC+4 into ra register -- Alternatively, H&H propagates PC+4 from IF stage
     io.ALUResult := PCplus4
+    //printf(p"EX io.ALUResult := PCplus4 0x${Hexadecimal(io.ALUResult)}\n")
   }.otherwise{
     io.ALUResult := Mux(mdu_op_flag, MDU.MDURes, ALU.aluRes) //MUX to choose the value either from ALU or MDU
+    //printf(p"EX io.ALUResult := Mux(mdu_op_flag, MDU.MDURes, ALU.aluRes) 0x${Hexadecimal(io.ALUResult)}, mdu_op_flag ${mdu_op_flag}\n")
   }
 
   // BTB-related: Finding new Branch Instructions and Updating Existing Prediction
@@ -149,4 +194,10 @@ class EX extends Module {
     io.updatePrediction := false.B
   }
   io.outPCplus4 := PCplus4
+
+
+
+  //printf(p"EX alu_operand1: 0x${Hexadecimal(alu_operand1)}, alu_operand2: 0x${Hexadecimal(alu_operand2)}\n")
+  //printf(p"\n")
+  
 }
