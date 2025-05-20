@@ -46,9 +46,9 @@ annotate(new ChiselAnnotation {
   val memory = SyncReadMem(2097152, UInt(32.W)) // sizes merged, next power of to //?
   loadMemoryFromFileInline(memory, memFile)
 
-
+  	//TODO no split mem file
     val IMEM_BASE = "h00000000".U  //not used
-    val DMEM_BASE = "h00100000".U  // 1048576 offset
+    val DMEM_BASE = "h00000000".U  // 1048576 offset
     //?swap? // more?
     val dataAccessAddr = (io.dataAddr - DMEM_BASE)//!(31, 2)??
 

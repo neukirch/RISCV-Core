@@ -28,10 +28,10 @@ class Cache (CacheFile: String, read_only: Boolean = false) extends Module{
     val miss = Output(Bool())
   })
   val scalaReadOnlyBool = if(read_only) true.B else false.B
-  //val write_en_reg = RegInit(false.B)
-  //val read_en_reg = RegInit(false.B)
+  val write_en_reg = RegInit(false.B)
+  val read_en_reg = RegInit(false.B)
   val data_addr_reg = Reg(UInt(32.W))
-  //val data_in_reg = if (!read_only) Some(Reg(UInt(32.W))) else None
+  val data_in_reg = if (!read_only) Some(Reg(UInt(32.W))) else None
 
   val cacheLines = 64.U // cache lines as a variable
   val idle :: writeback :: allocate :: prefHit:: Nil = Enum(4) //!added prefHit, removed compare
@@ -62,11 +62,9 @@ class Cache (CacheFile: String, read_only: Boolean = false) extends Module{
   read_en_wire := false.B
   val data_addr_wire = Wire(UInt(32.W))
   data_addr_wire := 0.U
-  val data_in_wire = if (!read_only) {
-    val w = Wire(UInt(32.W))
-    w := 0.U // Default assignment ensures full initialization
-    Some(w)
-  } else None
+  val data_in_wire = if (!read_only) Some(Wire(UInt(32.W))) else None
+  if (!read_only) data_in_wire.foreach(_ := io.data_in.get)
+
 
   val compareReg = RegInit(false.B)
 
@@ -74,7 +72,7 @@ class Cache (CacheFile: String, read_only: Boolean = false) extends Module{
 
   switch(stateReg) {
     // is(idle) {
-    //   //printf(p"idle state\n")
+    //   printf(p"idle state\n")
     //   io.data_out := data_element(31, 0)
     //   when(io.read_en || io.write_en.getOrElse(false.B)) {
     //     io.miss := true.B //! //y
@@ -89,74 +87,108 @@ class Cache (CacheFile: String, read_only: Boolean = false) extends Module{
     
 
     is(idle) {
+      printf(p"idle state\n")
       //!
-      io.data_out := data_element(31, 0)
+      //io.data_out := data_element(31, 0)
       when(io.read_en || io.write_en.getOrElse(false.B)) {
+        printf(p"idle state read_en or write_en\n")
         compareWire := true.B
         io.miss := true.B //! 
         write_en_wire := io.write_en.getOrElse(false.B)
         read_en_wire := io.read_en
         data_addr_reg := io.data_addr
         data_addr_wire := io.data_addr
-        if (!read_only) data_in_wire.foreach(_ := io.data_in.get)
-        
+        //if (!read_only) data_in_reg.foreach(_ := io.data_in.get)
+        // if (!read_only) data_in_wire.foreach(_ := io.data_in.get)
+
+
+
+
+        write_en_reg := io.write_en.getOrElse(false.B)//y
+        read_en_reg := io.read_en//y
+        if (!read_only) {
+          data_in_reg.foreach { reg =>
+            data_in_wire.foreach { wire =>
+              reg := wire
+            }
+          }
+        }
+
+
+
         statecount := false.B
       }
       //!
+      when(compareReg){
+        data_addr_wire := data_addr_reg
+        read_en_wire := read_en_reg
+        if (!read_only) data_in_reg.foreach(_ := io.data_in.get)
+      }
+
       when(compareWire || compareReg){
-      compareReg := false.B
-      //printf(p"compare state\n")
-      index := (data_addr_wire / 4.U) % cacheLines
-      data_element_wire := cache_data_array((data_addr_wire / 4.U) % cacheLines).asUInt
-      data_element := data_element_wire
+        compareReg := false.B
+        index := (data_addr_wire / 4.U) % cacheLines
+        data_element_wire := cache_data_array((data_addr_wire / 4.U) % cacheLines).asUInt
+        data_element := cache_data_array((data_addr_wire / 4.U) % cacheLines).asUInt
+        printf(p"idle compare data_element_wire: ${data_element_wire}, (31, 0): ${data_element_wire(31, 0)}\n")
+        printf(p"idle compare data_element: ${data_element}, (31, 0): ${data_element(31, 0)}\n")
 
-      when(data_element_wire(57) && (data_element_wire(55, 32).asUInt === data_addr_wire(31, 8).asUInt)) {
-        stateReg := idle
-        io.valid := true.B
-        when(read_en_wire) {//!read_en_reg) {
-          io.data_out := data_element_wire(31, 0)
-        }
-        if(!read_only) {
-          when(write_en_wire) {//!write_en_reg) {
-            val temp = Wire(Vec(58, Bool()))
-            temp := 0.U(58.W).asBools
-            temp(57) := true.B
-            temp(56) := true.B // set dirty bit
-
-            for (i <- 0 until 32) { temp(i) := data_in_wire.get(i) } // new data is stored
-            for (i <- 32 until 56) { temp(i) := data_element_wire(i) } // the tag remains the same
-            cache_data_array(index) := temp.asUInt
+        when(data_element_wire(57) && (data_element_wire(55, 32).asUInt === data_addr_wire(31, 8).asUInt)) {
+          stateReg := idle
+          printf(p"idle state valid\n")
+          io.valid := true.B
+          when(read_en_wire) {//!read_en_reg) {
+            io.data_out := data_element_wire(31, 0)
+            printf(p"idle state data out set ${data_element_wire(31, 0)}\n")
           }
-        }
-      }.otherwise {
-        when(io.hit){
-            //printf(p"cache pref hit ${io.data_addr}\n")
-            io.valid := true.B
-            io.data_out := io.prefData
-            if(!read_only) { //TODO busy signal? // stall?? // only have  output in next state?
-              stateReg := prefHit
-            }
-            else{
-              stateReg := idle
-            }
-        }.otherwise{
           if(!read_only) {
-            when(data_element_wire(56) && data_element_wire(57)) {
-              stateReg := writeback
-            }.otherwise {
+            when(write_en_wire) {//!write_en_reg) {
+              val temp = Wire(Vec(58, Bool()))
+              temp := 0.U(58.W).asBools
+              temp(57) := true.B
+              temp(56) := true.B // set dirty bit
+              when(write_en_wire){
+                for (i <- 0 until 32) { temp(i) := data_in_wire.get(i) } // new data is stored
+              }.otherwise{
+                for (i <- 0 until 32) { temp(i) := data_in_reg.get(i) } // new data is stored
+              }
+              
+              
+              for (i <- 32 until 56) { temp(i) := data_element_wire(i) } // the tag remains the same
+              cache_data_array(index) := temp.asUInt
+              printf(p"idle state set cache ${temp.asUInt}\n")
+            }
+          }
+        }.otherwise {
+          when(io.hit){
+              printf(p"idle state prefetcher hit\n")
+              io.valid := true.B
+              io.data_out := io.prefData
+              if(!read_only) { //TODO busy signal? // stall?? // only have  output in next state?
+                stateReg := prefHit
+              }
+              else{
+                stateReg := idle
+              }
+          }.otherwise{
+            printf(p"idle state not in cache or prefetcher -> wb or allocate\n")
+            if(!read_only) {
+              when(data_element_wire(56) && data_element_wire(57)) {
+                stateReg := writeback
+              }.otherwise {
+                stateReg := allocate
+              }
+            }
+            else {
               stateReg := allocate
             }
           }
-          else {
-            stateReg := allocate
-          }
         }
-      }
       }
     }
 
     is(writeback) {
-      //printf(p"writeback state\n")
+      printf(p"writeback state\n")
       io.mem_write_en := true.B
       io.mem_read_en := false.B
       val temp = Wire(Vec(32, Bool()))
@@ -171,8 +203,8 @@ class Cache (CacheFile: String, read_only: Boolean = false) extends Module{
     }
 
     is(allocate) {
-      //printf(p"allocate state\n")
       when(statecount) {
+        printf(p"allocate statecount state\n")
         statecount := false.B
         io.mem_read_en := false.B
         val temp = Wire(Vec(58, Bool()))
@@ -180,20 +212,22 @@ class Cache (CacheFile: String, read_only: Boolean = false) extends Module{
         for (i <- 0 until 32) { temp(i) := io.mem_data_out(i) }
         temp(56) := false.B
         temp(57) := true.B
-        for (i <- 32 until 56) { temp(i) := data_addr_wire(i - 24) }
+        for (i <- 32 until 56) { temp(i) := data_addr_reg(i - 24) }//data_addr_wire(i - 24) }
         cache_data_array(index) := temp.asUInt
+        printf(p"allocate cache_data_array: ${temp.asUInt}\n")
         //!stateReg := compare
         compareReg := true.B
         stateReg := idle
       }.otherwise {
+        printf(p"allocate state\n")
         statecount := true.B
         io.mem_read_en := true.B
         io.mem_write_en := false.B
-        io.mem_data_addr := data_addr_wire
+        io.mem_data_addr := data_addr_reg //!data_addr_wire
       }
     }
     is(prefHit) {
-      //printf(p"prefHit state\n")
+      printf(p"prefHit state\n")
       // Write the prefetched data into the cache
       val temp = Wire(Vec(58, Bool()))
       temp := 0.U(58.W).asBools
@@ -220,7 +254,5 @@ class Cache (CacheFile: String, read_only: Boolean = false) extends Module{
     }
 
   }
-  //printf(p"hit prefetcher: ${io.hit}, data prefetcher: ${io.prefData}\n")
-  //printf(p"\n")
-  //printf(p"\n")
+  printf(p"io.valid at end: ${io.valid}, io.data_out at end: ${io.data_out}\n")
 }
