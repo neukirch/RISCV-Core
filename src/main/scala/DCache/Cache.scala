@@ -70,6 +70,7 @@ class Cache (CacheFile: String, read_only: Boolean = false) extends Module{
 
   //TODO printf(p"index 0 cache_data_array at start: ${cache_data_array(0)}\n")
   //TODO printf(p"index 10 cache_data_array at start: ${cache_data_array(10)}\n")
+  //TODO printf(p"io.address: ${io.data_addr}, index: ${index}\n")
 
   //TODO printf(p"io.mem_data_in: ${io.mem_data_in}, io.mem_write_en: ${io.mem_write_en}, io.mem_read_en: ${io.mem_read_en}, io.mem_data_addr: ${io.mem_data_addr}\n")
 
@@ -278,7 +279,7 @@ class Cache (CacheFile: String, read_only: Boolean = false) extends Module{
     }
 
   }
-  //TODO //TODO printf(p"io.valid at end: ${io.valid}, io.data_out at end: ${io.data_out}\n")
+  //TODO printf(p"io.valid at end: ${io.valid}, io.data_out at end: ${io.data_out}\n")
   //TODO printf(p"\n")
   //TODO printf(p"\n")
   //TODO printf(p"\n")

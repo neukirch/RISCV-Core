@@ -29,6 +29,11 @@ class UnifiedMemory(memFile: String) extends Module {
     val dataIn          = Input(UInt(32.W))
     val dataAddr        = Input(UInt(32.W))
     val dataOut         = Output(UInt(32.W))
+
+    //Arbitration
+    //TODO signals to test harness????
+    val DMEM_gnt         = Output(Bool())
+    val IMEM_gnt         = Output(Bool())
   })
 
 //   annotate(new ChiselAnnotation {
@@ -40,20 +45,16 @@ val self = this
 annotate(new ChiselAnnotation {
   override def toFirrtl = NoDedupAnnotation(self.toNamed)
 })
+  
 
 
-
-  val memory = SyncReadMem(2097152, UInt(32.W)) // sizes merged, next power of to //?
+ 
+  //! changed to size of data mem: val memory = SyncReadMem(2097152, UInt(32.W)) // sizes merged, next power of to
+  val memory = SyncReadMem(1048576, UInt(32.W))
   loadMemoryFromFileInline(memory, memFile)
 
-  	//TODO no split mem file
-    val IMEM_BASE = "h00000000".U  //not used
-    val DMEM_BASE = "h00000000".U  // 1048576 offset
-    //?swap? // more?
-    val dataAccessAddr = (io.dataAddr - DMEM_BASE)//!(31, 2)??
-
-
-    testHarness.requestedAddressIMEM := io.instAddr
+  //set up mem connections to IO
+  testHarness.requestedAddressIMEM := io.instAddr
 
   // Instruction Address Source
   val instAddrSource = Wire(UInt(32.W))
@@ -70,7 +71,7 @@ annotate(new ChiselAnnotation {
   val readEnableSource   = Wire(Bool())
 
   when(testHarness.dmemSetup.setup) {
-    dataAddrSource    := testHarness.dmemSetup.dataAddress //!- DMEM_BASE //!
+    dataAddrSource    := testHarness.dmemSetup.dataAddress 
     dataInSource      := testHarness.dmemSetup.dataIn
     writeEnableSource := testHarness.dmemSetup.writeEnable
     readEnableSource  := testHarness.dmemSetup.readEnable
@@ -90,25 +91,47 @@ annotate(new ChiselAnnotation {
   testHarness.testUpdatesDMEM.writeData        := dataInSource
   testHarness.testUpdatesDMEM.writeAddress     := dataAddrSource
 
-  
+
+
+
   // For loading data for Instr
   when(testHarness.imemSetup.setup){
     memory(instAddrSource) := testHarness.imemSetup.instruction
   }
 
-  io.instOut := memory(instAddrSource(31,2)) //?(31,2)
-  //!instAddrSource??
-  
-  
-  
-  // Write to memory Data
-  when(writeEnableSource) {
+
+  //set default outputs
+  //TODO valid signal for stalling in case of simultaneous accesses
+  //io.instOut := 0.U
+  //io.dataOut := 0.U
+  io.DMEM_gnt := false.B
+  io.IMEM_gnt := false.B
+    
+  //TODO prio for write and read of data 
+  //Arbitration for fixed prio of data > instr
+  // when(writeEnableSource){
+  //   // Write to memory
+  //   memory(dataAddrSource) := dataInSource
+  //   io.DMEM_gnt := true.B
+  // }.elsewhen(readEnableSource){
+  //   // Read from memory
+  //   io.dataOut := memory(dataAddrSource)
+  //   io.DMEM_gnt := true.B
+  // }.otherwise{
+  //   // All other times(no specific request for instr as IF always happens)
+  //   io.instOut := memory(instAddrSource(31,2))
+  //   io.IMEM_gnt := true.B
+  // }
+
+  //TODO word align? of dataAddrSource, instrAddrSource->(31,2)
+  //TODO arbitration
+  //! no arbitration:
+  when(writeEnableSource){
+    // Write to memory
     memory(dataAddrSource) := dataInSource
-  }//!dataAddrSource(31,2)??
-
-  // Read from memory
-  io.dataOut := memory(dataAddrSource)
-  //!dataAddrSource(31,2)??
-
-
+  }
+    // Read from memory
+    io.dataOut := memory(dataAddrSource)
+    // All other times(no specific request for instr as IF always happens)
+    io.instOut := memory(instAddrSource(31,2))
 }
