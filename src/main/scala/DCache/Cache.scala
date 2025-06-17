@@ -21,9 +21,9 @@ class Cache (CacheFile: String, read_only: Boolean = false) extends Module{
     val mem_data_in = Output(UInt(32.W))
     val mem_data_addr = Output(UInt(32.W))
     val mem_data_out = Input(UInt(32.W))
-    val mem_granted = Input(Bool()) //!NEW
 
-    //!added for  prefetcher
+    val mem_granted = Input(Bool())
+
     val hit = Input(Bool()) //is there a hit in a buffer
     val prefData = Input(UInt(32.W)) //output from buffer
     val miss = Output(Bool())
@@ -35,7 +35,7 @@ class Cache (CacheFile: String, read_only: Boolean = false) extends Module{
   val data_in_reg = if (!read_only) Some(Reg(UInt(32.W))) else None
 
   val cacheLines = 64.U // cache lines as a variable
-  val idle :: writeback :: allocate :: prefHit:: Nil = Enum(4) //!added prefHit, removed compare
+  val idle :: writeback :: allocate :: prefHit:: Nil = Enum(4)
   val stateReg = RegInit(idle)
   val index = Reg(UInt(6.W)) // stores the current cache index in a register to use in later states
   val data_element = Reg(UInt(58.W)) // stores the loaded cache element in a register to use in later states
@@ -48,7 +48,7 @@ class Cache (CacheFile: String, read_only: Boolean = false) extends Module{
   io.data_out := 0.U
   io.valid := 0.B
   io.busy := (stateReg =/= idle)
-  io.miss := false.B//!
+  io.miss := false.B
 
   io.mem_write_en := 0.B
   io.mem_read_en := 0.B
@@ -76,7 +76,7 @@ class Cache (CacheFile: String, read_only: Boolean = false) extends Module{
     is(idle) {
       when(io.read_en || io.write_en.getOrElse(false.B)) {
         compareWire := true.B
-        io.miss := true.B //! 
+        io.miss := true.B 
         write_en_wire := io.write_en.getOrElse(false.B)
         read_en_wire := io.read_en
         data_addr_reg := io.data_addr
@@ -95,7 +95,6 @@ class Cache (CacheFile: String, read_only: Boolean = false) extends Module{
         
         statecount := false.B
       }
-      //!
       when(compareReg){
         data_addr_wire := data_addr_reg
         read_en_wire := read_en_reg
@@ -133,7 +132,7 @@ class Cache (CacheFile: String, read_only: Boolean = false) extends Module{
               }.otherwise{
                 for (i <- 0 until 32) { temp(i) := data_in_reg.get(i) } // new data is stored
                 //for (i <- 32 until 56) { temp(i) := data_element(i) } // the tag remains the same
-                for (i <- 32 until 56) { temp(i) := data_element_wire(i) }//! remove??!?!?!?!?!?!?!
+                for (i <- 32 until 56) { temp(i) := data_element_wire(i) }
                 
               }//if wire write from there, otherwise has to be from reg
               
@@ -204,9 +203,7 @@ class Cache (CacheFile: String, read_only: Boolean = false) extends Module{
         for (i <- 32 until 56) { temp(i) := data_addr_reg(i - 24) }//data_addr_wire(i - 24) }
         cache_data_array(index) := temp.asUInt
         
-        //!
         data_element := temp.asUInt
-        //!
 
         compareReg := true.B
         stateReg := idle
@@ -214,7 +211,7 @@ class Cache (CacheFile: String, read_only: Boolean = false) extends Module{
         
         io.mem_read_en := true.B
         io.mem_write_en := false.B
-        io.mem_data_addr := data_addr_reg //!data_addr_wire
+        io.mem_data_addr := data_addr_reg
         when(io.mem_granted){
           statecount := true.B
         }
