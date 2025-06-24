@@ -47,7 +47,21 @@ class IF(BinaryFile: String) extends Module
     val PC                 = Output(UInt())
     val instruction        = Output(new Instruction)
     val fetchBusy          = Output(Bool()) // added this signal for stall
+
+    //! Added for Loop_Test_0
+    val branchToDo      = Output(Bool())
   })
+  val oldPC = RegInit(0.U(32.W))
+  val next = RegInit(false.B)
+  val branchAddress = RegInit(0.U(32.W))
+  val branchToDo = RegInit(false.B)
+
+  when(io.branchTaken){
+    branchToDo := true.B
+  }
+
+
+
 
   // TODO change name for "InstructionMemory"
   val InstructionMemory = Module(new DICachesAndMemory(BinaryFile))//ICacheAndIMemory(BinaryFile)) // it should be changed with ICacheAndMemory class
@@ -149,8 +163,25 @@ class IF(BinaryFile: String) extends Module
 //    nextPC := PCplus4
 //  }
   
+
+  //! Added for Loop_Test_0
+  when(InstructionMemory.io.pcOut === branchAddress && InstructionMemory.io.ICACHEvalid && branchToDo){
+    branchToDo := false.B
+  }
+  io.branchToDo := branchToDo
+  when(InstructionMemory.io.ICACHEvalid){
+    next := true.B
+  }.otherwise{
+    next := false.B
+  }
+  when(next){
+    oldPC := PC
+  }
+
+
   // Send PC to the rest of the pipeline
-  io.PC := PC
+  //!io.PC := PC
+  io.PC := oldPC
 
   io.instruction := instruction
 

@@ -39,6 +39,9 @@ class HazardUnit extends Module
         val flushD              = Output(Bool())
         val rs1Select           = Output(UInt(2.W))     //Used to select input to ALU in case of forwarding -- output from FwdUint
         val rs2Select           = Output(UInt(2.W))
+
+        //! Added for Loop_Test_0
+        val branchToDo           = Input(Bool())
     }
   )
 
@@ -70,11 +73,16 @@ class HazardUnit extends Module
     io.rs2Select  := 0.asUInt(2.W)
   }
 
+
+  //! Added for Loop_Test_0
+  val branchToDo = RegInit(false.B)
 // Stalling for Load
   when(  (io.rs1AddrIFB =/= 0.U || io.rs2AddrIFB =/= 0.U) 
          && (io.rs1AddrIFB === io.rdAddrIDB || io.rs2AddrIFB === io.rdAddrIDB) 
          && io.controlSignalsEXB.regWrite 
          && io.controlSignalsEXB.memToReg) {  
+    stall := true.B
+  }.elsewhen(branchToDo || io.branchToDo){
     stall := true.B
   }.otherwise{
     stall := false.B

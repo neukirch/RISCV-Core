@@ -38,6 +38,7 @@ class DICachesAndMemory (I_memoryFile: String, cacheOnly : Boolean = true) exten
       val instr_out = Output(UInt(32.W))
       val ICACHEvalid = Output(Bool())
       val ICACHEbusy = Output(Bool())
+      val pcOut = Output(UInt(32.W))
       //Data
       val write_data = Input(UInt(32.W))
       val address = Input(UInt(32.W))
@@ -53,10 +54,13 @@ class DICachesAndMemory (I_memoryFile: String, cacheOnly : Boolean = true) exten
   //Modules
   val arbiter  = Module(new MemArbiter("src/main/scala/DataMemory/dataMemVals"))
   val dcache = Module(new Cache("src/main/scala/DCache/CacheContent.bin", read_only = false))
-  val icache = Module(new Cache("src/main/scala/ICache/ICacheContent.bin", read_only = true))
+  val icache = Module(new ICache("src/main/scala/ICache/ICacheContent.bin", read_only = true))
   
-  val ipref = Module(new Prefetcher(I_memoryFile, cacheOnly))
+  val ipref = Module(new Prefetcher(I_memoryFile, true)) //!cacheOnly))
   
+  //! Added for Loop_Test_0
+  io.pcOut := icache.io.pcOut
+
 
 
   //!Arbiter Connections
@@ -108,4 +112,8 @@ class DICachesAndMemory (I_memoryFile: String, cacheOnly : Boolean = true) exten
 
   arbiter.testHarness.setupSignals := testHarness.setupSignals
   testHarness.requestedAddress := arbiter.testHarness.requestedAddress
+
+
+  printf(p"MEM icache.io.data_addr: ${icache.io.data_addr}, icache.io.data_out: 0x${Hexadecimal(icache.io.data_out.asUInt)}\n")
+
 }
