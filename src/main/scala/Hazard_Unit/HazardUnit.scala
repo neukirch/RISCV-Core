@@ -42,6 +42,8 @@ class HazardUnit extends Module
 
         //! Added for Loop_Test_0
         val branchToDo           = Input(Bool())
+
+
     }
   )
 
@@ -84,6 +86,7 @@ class HazardUnit extends Module
     stall := true.B
   }.elsewhen(branchToDo || io.branchToDo){
     stall := true.B
+    // printf(p"HzdUnit branchToDo: ${branchToDo}, io.branchToDo: ${io.branchToDo}\n")
   }.otherwise{
     stall := false.B
   }
@@ -94,7 +97,7 @@ class HazardUnit extends Module
   // Outputs: Data Hazard -> stall ID & IF stages, and Flush EX stage (Load) ___ Control Hazard -> flush ID & EX stages (Branch Taken)
   // *NOTE*: If io.branchType = DC, this means the branch/jump instruction currently in EX is invalid (flushed!) --> correcting misprediction is invalid too!
 
-  io.stall    := stall
+  io.stall    := stall || io.membusy
 
   when((io.branchTaken =/= io.btbPrediction &&  io.branchType =/= branch_types.DC) || io.wrongAddrPred){
     io.branchMispredicted := 1.B
@@ -103,7 +106,9 @@ class HazardUnit extends Module
     io.branchMispredicted := 0.B
   }
   io.flushD   := io.branchMispredicted
-  io.flushE   := io.stall | io.branchMispredicted
+  io.flushE   := io.branchMispredicted//!io.stall | io.branchMispredicted
   //io.flushE   := io.stall | io.branchMispredicted | io.stall_membusy
+
+  // // printf(p"Hazard Unit stall: ${io.stall}\n")
 
 }

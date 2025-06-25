@@ -1,25 +1,21 @@
 package ICache
 
-import DCache.Cache
 import chisel3._
 import chisel3.util._
 import chisel3.experimental._
 import chisel3.util.experimental._
 import firrtl.annotations.MemoryLoadFileType
 
-  class ICache (CacheFile: String, read_only: Boolean = true) extends Module{
+  class ICache (CacheFile: String) extends Module{
   val io = IO(new Bundle {
-    val write_en = if (!read_only) Some(Input(Bool())) else None
     val read_en = Input(Bool())
     val data_addr = Input(UInt(32.W))
-    val data_in = if (!read_only) Some(Input(UInt(32.W))) else None
     val data_out = Output(UInt(32.W))
     val valid = Output(Bool())
     val busy = Output(Bool())
 
     val mem_write_en = Output(Bool())
     val mem_read_en = Output(Bool())
-    val mem_data_in = Output(UInt(32.W))
     val mem_data_addr = Output(UInt(32.W))
     val mem_data_out = Input(UInt(32.W))
 
@@ -31,14 +27,17 @@ import firrtl.annotations.MemoryLoadFileType
 
     //! Added for Loop_Test_0
     val pcOut = Output(UInt(32.W))
+    val flushed = Input(Bool())
+
   })
   io.pcOut := io.data_addr
+  val flushed = RegInit(false.B)
+  when(io.flushed){
+    flushed := true.B
+  }
 
-  val scalaReadOnlyBool = if(read_only) true.B else false.B
-  val write_en_reg = RegInit(false.B)
   val read_en_reg = RegInit(false.B)
   val data_addr_reg = Reg(UInt(32.W))
-  val data_in_reg = if (!read_only) Some(Reg(UInt(32.W))) else None
 
   val cacheLines = 64.U // cache lines as a variable
   val idle :: allocate :: prefHit:: Nil = Enum(3)
@@ -53,121 +52,88 @@ import firrtl.annotations.MemoryLoadFileType
 
   io.data_out := 0.U
   io.valid := 0.B
-  io.busy := (stateReg =/= idle)
+  io.busy := false.B//(stateReg =/= idle)
   io.miss := false.B
 
-  io.mem_write_en := 0.B
+  io.mem_write_en := false.B //always false as we only read
   io.mem_read_en := 0.B
-  io.mem_data_in := 0.U
   io.mem_data_addr := 0.U
 
   val compareWire = Wire(Bool())
   compareWire := false.B
-  val write_en_wire = Wire(Bool())
-  write_en_wire := false.B
   val read_en_wire = Wire(Bool())
   read_en_wire := false.B
   val data_addr_wire = Wire(UInt(32.W))
   data_addr_wire := 0.U
-  val data_in_wire = if (!read_only) Some(Wire(UInt(32.W))) else None
-  if (!read_only) data_in_wire.foreach(_ := io.data_in.get)
 
 
   val compareReg = RegInit(false.B)
-
 
   switch(stateReg) {
     
     
     is(idle) {
-      when(io.read_en || io.write_en.getOrElse(false.B)) {
+      // printf(p"idle\n")
+      when(io.read_en) {
+        // printf(p"idle read\n")
+        io.busy := true.B
         compareWire := true.B
         io.miss := true.B 
-        write_en_wire := io.write_en.getOrElse(false.B)
         read_en_wire := io.read_en
         data_addr_reg := io.data_addr
         data_addr_wire := io.data_addr
 
-
-        write_en_reg := write_en_wire
         read_en_reg := read_en_wire
-        if (!read_only) {
-          data_in_reg.foreach { reg =>
-            data_in_wire.foreach { wire =>
-              reg := wire
-            }
-          }
-        }
+  
         
         statecount := false.B
       }
       when(compareReg){
         data_addr_wire := data_addr_reg
         read_en_wire := read_en_reg
-        if (!read_only) data_in_reg.foreach(_ := io.data_in.get)
       }
 
       when(compareWire || compareReg){
-      
+        // printf(p"idle compare\n")
+        // io.busy := true.B
         compareReg := false.B
         index := (data_addr_wire / 4.U) % cacheLines
         data_element_wire := cache_data_array((data_addr_wire / 4.U) % cacheLines).asUInt
         data_element := data_element_wire
-       
         when(data_element_wire(57) && (data_element_wire(55, 32).asUInt === data_addr_wire(31, 8).asUInt)) {
-          stateReg := idle
           
+          stateReg := idle
+          // printf(p"idle cache hit data_addr_wire ${data_addr_wire}, data_addr_reg${data_addr_reg}\n")
           io.valid := true.B
+          io.busy:= false.B
           when(read_en_wire && compareReg) {
             io.data_out := data_element(31, 0)
-            
+            // printf(p"io.data_out 1111 0x${Hexadecimal(data_element(31, 0))}\n")
           }.elsewhen{read_en_wire}{
             io.data_out := data_element_wire(31, 0)
-            
-          }
-          if(!read_only) {
-            when(write_en_wire || write_en_reg) {
-              val temp = Wire(Vec(58, Bool()))
-              temp := 0.U(58.W).asBools
-              temp(57) := true.B
-              temp(56) := true.B // set dirty bit
-              when(write_en_wire){
-                for (i <- 0 until 32) { temp(i) := data_in_wire.get(i) } // new data is stored
-                for (i <- 32 until 56) { temp(i) := data_element_wire(i) } // the tag remains the same
-                
-              }.otherwise{
-                for (i <- 0 until 32) { temp(i) := data_in_reg.get(i) } // new data is stored
-                //for (i <- 32 until 56) { temp(i) := data_element(i) } // the tag remains the same
-                for (i <- 32 until 56) { temp(i) := data_element_wire(i) }
-                
-              }//if wire write from there, otherwise has to be from reg
-              
-              //for (i <- 0 until 32) { temp(i) := data_in_reg.get(i) } // new data is stored
-              
-              cache_data_array(index) := temp.asUInt
-            }
+            // printf(p"io.data_out 2222 0x${Hexadecimal(data_element_wire(31, 0))}\n")
           }
         }.otherwise {
           when(io.hit){
+            
+            // printf(p"idle pref hit\n")
               
               io.valid := true.B
               io.data_out := io.prefData
-              if(!read_only) { 
-                stateReg := prefHit
-              }
-              else{
-                stateReg := idle
-              }
+              stateReg := prefHit
           }.otherwise{  
+            // printf(p"idle allocate\n")
             stateReg := allocate
+            io.busy := true.B
           }
         }
       }
     }
 
     is(allocate) {
-      
+      io.busy := true.B
       when(statecount) {
+        // printf(p"allocate 2 ${data_addr_reg}\n")
         statecount := false.B
         io.mem_read_en := false.B
         val temp = Wire(Vec(58, Bool()))
@@ -184,18 +150,24 @@ import firrtl.annotations.MemoryLoadFileType
 
         compareReg := true.B
         stateReg := idle
+        when(flushed){
+          data_addr_reg := io.data_addr
+          flushed := false.B
+          data_element := cache_data_array((io.data_addr / 4.U) % cacheLines).asUInt
+          // printf(p"Cache flushed${io.data_addr}\n")
+        }
       }.otherwise {
-        
+        // printf(p"allocate 1\n")
         io.mem_read_en := true.B
-        io.mem_write_en := false.B
         io.mem_data_addr := data_addr_reg
         when(io.mem_granted){
           statecount := true.B
         }
-
       }
     }
     is(prefHit) {
+      io.busy := true.B
+      // printf(p"prefHit\n")
     
       // Write the prefetched data into the cache
       val temp = Wire(Vec(58, Bool()))
@@ -225,5 +197,6 @@ import firrtl.annotations.MemoryLoadFileType
   }
 
 
-  printf(p"Cache data_addr: ${io.data_addr}, io.data_out: 0x${Hexadecimal(io.data_out.asUInt)}\n")
+  // printf(p"cache_data_array(0): 0x${Hexadecimal(cache_data_array(0)(31,0))}, cache_data_array(1): 0x${Hexadecimal(cache_data_array(1)(31,0))}\n")
+  // printf(p"cache_data_array(2): 0x${Hexadecimal(cache_data_array(2)(31,0))},cache_data_array(3): 0x${Hexadecimal(cache_data_array(3)(31,0))},cache_data_array(4): 0x${Hexadecimal(cache_data_array(4)(31,0))}\n")
 }

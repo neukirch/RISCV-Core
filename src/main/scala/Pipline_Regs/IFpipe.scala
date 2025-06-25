@@ -84,7 +84,7 @@ class IFpipe extends Module
 
 
 
-  // Propagate PC
-  io.outCurrentPC := currentPCReg   
+  // // Propagate PC
+  // io.outCurrentPC := currentPCReg   
 
 }

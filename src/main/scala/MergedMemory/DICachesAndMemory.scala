@@ -47,14 +47,17 @@ class DICachesAndMemory (I_memoryFile: String, cacheOnly : Boolean = true) exten
       val data_out = Output(UInt(32.W))
       val DCACHEvalid = Output(Bool())
       val DCACHEbusy = Output(Bool())
+
+
+      val flushed = Input(Bool())
     }
   )
 
 
   //Modules
-  val arbiter  = Module(new MemArbiter("src/main/scala/DataMemory/dataMemVals"))
+  val arbiter  = Module(new MemArbiter(I_memoryFile))
   val dcache = Module(new Cache("src/main/scala/DCache/CacheContent.bin", read_only = false))
-  val icache = Module(new ICache("src/main/scala/ICache/ICacheContent.bin", read_only = true))
+  val icache = Module(new ICache("src/main/scala/ICache/ICacheContent.bin"))
   
   val ipref = Module(new Prefetcher(I_memoryFile, true)) //!cacheOnly))
   
@@ -62,6 +65,7 @@ class DICachesAndMemory (I_memoryFile: String, cacheOnly : Boolean = true) exten
   io.pcOut := icache.io.pcOut
 
 
+  icache.io.flushed := io.flushed
 
   //!Arbiter Connections
   //Instruction
@@ -89,10 +93,6 @@ class DICachesAndMemory (I_memoryFile: String, cacheOnly : Boolean = true) exten
   io.data_out := dcache.io.data_out
   io.DCACHEbusy := dcache.io.busy
 
-  //Prefetcher not for data
-  dcache.io.hit := false.B
-  dcache.io.prefData := 0.U
-
   //xxxxxxxxxxx
   //Instruction
           //Prefetcher signals
@@ -114,6 +114,6 @@ class DICachesAndMemory (I_memoryFile: String, cacheOnly : Boolean = true) exten
   testHarness.requestedAddress := arbiter.testHarness.requestedAddress
 
 
-  printf(p"MEM icache.io.data_addr: ${icache.io.data_addr}, icache.io.data_out: 0x${Hexadecimal(icache.io.data_out.asUInt)}\n")
+   // printf(p"MEM icache.io.data_addr: ${icache.io.data_addr}, icache.io.data_out: 0x${Hexadecimal(icache.io.data_out.asUInt)}\n")
 
 }

@@ -13,7 +13,7 @@ class loop_tb extends AnyFlatSpec with ChiselScalatestTester {
   "Loop_Tests" should "pass" in {
     test(new RISCV_TOP("src/test/programs/Loop_Test_0")).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
 
-      for(i <- 0 until 50){
+      for(i <- 0 until 200){
         dut.clock.step()
       }
 
