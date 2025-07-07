@@ -14,7 +14,6 @@ import firrtl.annotations.MemoryLoadFileType
     val valid = Output(Bool())
     val busy = Output(Bool())
 
-    val mem_write_en = Output(Bool())
     val mem_read_en = Output(Bool())
     val mem_data_addr = Output(UInt(32.W))
     val mem_data_out = Input(UInt(32.W))
@@ -55,7 +54,6 @@ import firrtl.annotations.MemoryLoadFileType
   io.busy := false.B//(stateReg =/= idle)
   io.miss := false.B
 
-  io.mem_write_en := false.B //always false as we only read
   io.mem_read_en := 0.B
   io.mem_data_addr := 0.U
 

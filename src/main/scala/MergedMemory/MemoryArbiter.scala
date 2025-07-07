@@ -35,6 +35,13 @@ val io = IO(new Bundle {
   val grantInst = Output(Bool())        //is data for I cache from mem valid
 
 
+  //!Prefetcher
+  val pref_addr = Input(UInt(32.W))
+
+  val grantPref = Output(Bool())
+
+
+
   })
 
 
@@ -43,8 +50,6 @@ val io = IO(new Bundle {
   io.grantData := false.B
   io.grantInst := false.B
 
-
-  //TODO maybe also cache and prefetch connections here????
   val mem  = Module(new UnifiedMemory(memFile))
 
   //default inputs for memory module
@@ -59,10 +64,28 @@ val io = IO(new Bundle {
   mem.io.write := Mux(io.dReq, io.dWrite, false.B) // set write if data cache requests write
   mem.io.wdata := Mux(io.dReq, io.dData, 0.U) //set data to write
 
+when(io.dReq){// Data first
+  mem.io.req := io.dReq
+  mem.io.addr := io.dAddr
+  mem.io.write := io.dWrite
+  mem.io.wdata := io.dData
+}.elsewhen(io.iReq){// ICache second
+  mem.io.req := io.iReq
+  mem.io.addr := io.iAddr
+  mem.io.write := false.B
+  mem.io.wdata := 0.U
+}.otherwise{// IPref last
+  mem.io.req := true.B
+  mem.io.addr := io.pref_addr
+  mem.io.write := false.B
+  mem.io.wdata := 0.U
+}
+
   //set outputs to caches
   io.dataRead := mem.io.dataRead
   io.grantData := io.dReq
   io.grantInst := !io.dReq && io.iReq
+  io.grantPref := !io.dReq && !io.iReq
 
 
   //test harness //TODO

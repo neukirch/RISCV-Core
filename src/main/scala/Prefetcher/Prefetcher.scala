@@ -5,40 +5,32 @@ import chisel3.experimental.ChiselEnum
 import chisel3.util._
 import chisel3.util.experimental.loadMemoryFromFile
 
-import UnifiedMemory._
 
-class Prefetcher(IMemFile: String, cacheOnly: Boolean = true) extends Module {
-  val io = IO(new Bundle {//TODO Add test harness
+class Prefetcher extends Module {
+  val io = IO(new Bundle {//TODO Add test harness??
     val missAddress = Input(UInt(32.W)) //address of miss
     val cacheBusy = Input(Bool()) //is cache working on something
     val hit = Output(Bool()) //show that there was a hit in a buffer
     val result = Output(UInt(32.W)) //output of instruction at the requested address
     val miss = Input(Bool()) 
+
+
+    //! Memory Connections
+    val mem_instr = Input(UInt(32.W))
+    val grantPref  = Input(Bool()) //TODO add in FSM
+
+    val mem_addr = Output(UInt(32.W))
   })
+
+  //! Memory Connections standard values
+  io.mem_addr := io.missAddress
+
+
   //amount and depth of buffers, adjusted according to needs or tests
   val depth = 6
   val amount = 4
   val widthAmount = log2Ceil(amount + 1)
 
-  //setup instruction memory
-  val IMem = Module(new UnifiedMemory(IMemFile))
-
-  IMem.testHarness.dmemSetup.setup       := false.B
-  IMem.testHarness.dmemSetup.dataAddress := 0.U
-  IMem.testHarness.dmemSetup.dataIn      := 0.U
-  IMem.testHarness.dmemSetup.writeEnable := false.B
-  IMem.testHarness.dmemSetup.readEnable  := false.B
-
-  IMem.io.write := false.B
-  IMem.io.req  := false.B
-  IMem.io.wdata          := 0.U
-  IMem.io.addr        := io.missAddress
-
-
-  IMem.testHarness.imemSetup.setup      := false.B
-  IMem.testHarness.imemSetup.address    := 0.U
-  IMem.testHarness.imemSetup.instruction := 0.U
-  IMem.testHarness.requestedAddressIMEM := DontCare
 
 
   //setup module for least recently used buffer
@@ -106,14 +98,12 @@ class Prefetcher(IMemFile: String, cacheOnly: Boolean = true) extends Module {
         when(hitCheck === true.B) { //hit in a buffer
             buffer(fetchBuf).deq.ready := true.B //start dequeue
             io.result := buffer(fetchBuf).deq.bits(31, 0) //output data
-            IMem.io.addr := nextAdress(fetchBuf)//set next adress to fetch
-            if(!cacheOnly){
-              io.hit := true.B//set hit to true to show there was a hit in a buffer
-            }
+            io.mem_addr := nextAdress(fetchBuf)//set next adress to fetch
+            io.hit := true.B//set hit to true to show there was a hit in a buffer
 
             state := fetch //go to fetch state
         }.elsewhen(emptyCheck === true.B) {//no hit, but a buffer is empty, start fetching at adress after miss
-          IMem.io.addr := io.missAddress + 4.U //set adress to fetch
+          io.mem_addr := io.missAddress + 4.U //set adress to fetch
           nextAdress(fetchBuf) := io.missAddress + 4.U//update register
           state := fetch //go to fetch state
         }.otherwise { //no hit, no buffer empty, need to flush a buffer
@@ -123,24 +113,27 @@ class Prefetcher(IMemFile: String, cacheOnly: Boolean = true) extends Module {
     }
     is(fetch) { //prefetch state
       when(buffer(fetchBuf).count =/= depth.U && !io.miss) { 
+        when(io.grantPref){
         //update lru
         leastU.io.usedValid := true.B
         leastU.io.used := fetchBuf
 
         //enqueue
         buffer(fetchBuf).enq.valid := true.B
-        buffer(fetchBuf).enq.bits := Cat(nextAdress(fetchBuf), IMem.io.dataRead) 
+        buffer(fetchBuf).enq.bits := Cat(nextAdress(fetchBuf), io.mem_instr) 
 
-        IMem.io.addr := nextAdress(fetchBuf) + 4.U //next address to fetch
+        io.mem_addr := nextAdress(fetchBuf) + 4.U //next address to fetch
         nextAdress(fetchBuf) := nextAdress(fetchBuf) + 4.U //update register
+        }
       }.elsewhen(buffer(fetchBuf).count =/= depth.U && io.miss){ 
+        when(io.grantPref){
         //update lru
         leastU.io.usedValid := true.B
         leastU.io.used := fetchBuf
 
         //enqueue
         buffer(fetchBuf).enq.valid := true.B
-        buffer(fetchBuf).enq.bits := Cat(nextAdress(fetchBuf), IMem.io.dataRead)
+        buffer(fetchBuf).enq.bits := Cat(nextAdress(fetchBuf), io.mem_instr)
 
         nextAdress(fetchBuf) := nextAdress(fetchBuf) + 4.U //update register
 
@@ -160,6 +153,7 @@ class Prefetcher(IMemFile: String, cacheOnly: Boolean = true) extends Module {
           }
         }
         state := compare
+        }
       }.otherwise { //if no miss occurs and the buffer is fully  fetched go to idle state and wait for miss
         state := waitMiss //idle state
       }
@@ -170,7 +164,7 @@ class Prefetcher(IMemFile: String, cacheOnly: Boolean = true) extends Module {
       fetchBuf := leastU.io.out //save which buffer was flushed to fetch into it
 
       nextAdress(leastU.io.out) := io.missAddress + 4.U //update register
-      IMem.io.addr := io.missAddress + 4.U //set adress to fetch
+      io.mem_addr := io.missAddress + 4.U //set adress to fetch
       state := fetch //go to fetch state
     }
   }

@@ -11,6 +11,8 @@ Student Workers: Giorgi Solomnishvili, Zahra Jenab Mahabadi, Tsotne Karchava
 
 package top_MC
 
+import Prefetcher.Prefetcher
+
 import Cache.DICachesAndMemory
 import config.{ControlSignals, IMEMsetupSignals, Inst, Instruction}
 import config.Inst._
@@ -224,30 +226,33 @@ class top_MC(BinaryFile: String, DataFile: String) extends Module {
 
 
 
+
+
+
   //! Added for debugging of program flow
-  printf(p"------------------------------------IF------------------------------------\n")
-  printf(p"PC: ${IF.io.PC}, instruction: 0x${Hexadecimal(IF.io.instruction.asUInt)}, branchTaken: ${IF.io.branchTaken}, branchAddr: ${IF.io.branchAddr}\n")
+  // printf(p"------------------------------------IF------------------------------------\n")
+  // printf(p"PC: ${IF.io.PC}, instruction: 0x${Hexadecimal(IF.io.instruction.asUInt)}, branchTaken: ${IF.io.branchTaken}, branchAddr: ${IF.io.branchAddr}\n")
 
-  printf(p"------------------------------------IFBarrier------------------------------------\n")
-  printf(p"outPC: ${IFBarrier.outCurrentPC}, instruction: 0x${Hexadecimal(IFBarrier.outInstruction.asUInt)}, stall: ${IFBarrier.stall}, flush: ${IFBarrier.flush}\n")
+  // printf(p"------------------------------------IFBarrier------------------------------------\n")
+  // printf(p"outPC: ${IFBarrier.outCurrentPC}, instruction: 0x${Hexadecimal(IFBarrier.outInstruction.asUInt)}, stall: ${IFBarrier.stall}, flush: ${IFBarrier.flush}\n")
 
-  printf(p"------------------------------------ID------------------------------------\n")
-  printf(p"instruction: 0x${Hexadecimal(ID.io.instruction.asUInt)}\n")
+  // printf(p"------------------------------------ID------------------------------------\n")
+  // printf(p"instruction: 0x${Hexadecimal(ID.io.instruction.asUInt)}\n")
 
-  printf(p"------------------------------------IDBarrier------------------------------------\n")
-  printf(p"outPC: ${IDBarrier.outPC}, instruction: 0x${Hexadecimal(IDBarrier.outInstruction.asUInt)}, stall: ${IDBarrier.stall}, flush: ${IDBarrier.flush}\n")
+  // printf(p"------------------------------------IDBarrier------------------------------------\n")
+  // printf(p"outPC: ${IDBarrier.outPC}, instruction: 0x${Hexadecimal(IDBarrier.outInstruction.asUInt)}, stall: ${IDBarrier.stall}, flush: ${IDBarrier.flush}\n")
 
-  printf(p"------------------------------------EX------------------------------------\n")
-  printf(p"PC: ${EX.io.PC}, instruction: 0x${Hexadecimal(EX.io.instruction.asUInt)}, ALUResult: ${EX.io.ALUResult}\n")
+  // printf(p"------------------------------------EX------------------------------------\n")
+  // printf(p"PC: ${EX.io.PC}, instruction: 0x${Hexadecimal(EX.io.instruction.asUInt)}, ALUResult: ${EX.io.ALUResult}\n")
 
-  printf(p"------------------------------------EXBarrier------------------------------------\n")
-  printf(p"stall: ${EXBarrier.stall}, outALUResult: ${EXBarrier.outALUResult}\n")
+  // printf(p"------------------------------------EXBarrier------------------------------------\n")
+  // printf(p"stall: ${EXBarrier.stall}, outALUResult: ${EXBarrier.outALUResult}\n")
 
-  printf(p"------------------------------------HzdUnit------------------------------------\n")
-  printf(p"stall: ${HzdUnit.io.stall}, stall_membusy: ${HzdUnit.io.stall_membusy}, flushD: ${HzdUnit.io.flushD}, flushE: ${HzdUnit.io.flushE}, branchTaken: ${HzdUnit.io.branchTaken}, branchToDo: ${HzdUnit.io.branchToDo},\n")
+  // printf(p"------------------------------------HzdUnit------------------------------------\n")
+  // printf(p"stall: ${HzdUnit.io.stall}, stall_membusy: ${HzdUnit.io.stall_membusy}, flushD: ${HzdUnit.io.flushD}, flushE: ${HzdUnit.io.flushE}, branchTaken: ${HzdUnit.io.branchTaken}, branchToDo: ${HzdUnit.io.branchToDo},\n")
 
-  printf(p"\n")
-  printf(p"\n")
+  // printf(p"\n")
+  // printf(p"\n")
   
 
 }
