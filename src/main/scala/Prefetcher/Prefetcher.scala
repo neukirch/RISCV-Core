@@ -83,7 +83,7 @@ class Prefetcher extends Module {
   switch(state) {
     is(waitMiss) {
       //printf(p"PREF waitMiss\n")
-      //wait until miss
+      when(io.miss === true.B) {//wait until miss
       //check if a buffer is empty
         for (i <- 0 until amount) {
           when(buffer(i).count === 0.U) {//if empty
