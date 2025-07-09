@@ -32,14 +32,9 @@ val io = IO(new Bundle {
   //Outputs
   val dataRead = Output(UInt(32.W)) //data from mem to send to caches
   val grantData = Output(Bool())        //is data for D cache from mem valid
-  val grantInst = Output(Bool())        //is data for I cache from mem valid
-
 
   //!Prefetcher
   val pref_addr = Input(UInt(32.W))
-
-  val grantPref = Output(Bool())
-
 
 
   })
@@ -48,7 +43,6 @@ val io = IO(new Bundle {
 
   io.dataRead := 0.U
   io.grantData := false.B
-  io.grantInst := false.B
 
   val mem  = Module(new UnifiedMemory(memFile))
 
@@ -69,11 +63,6 @@ when(io.dReq){// Data first
   mem.io.addr := io.dAddr
   mem.io.write := io.dWrite
   mem.io.wdata := io.dData
-}.elsewhen(io.iReq){// ICache second
-  mem.io.req := io.iReq
-  mem.io.addr := io.iAddr
-  mem.io.write := false.B
-  mem.io.wdata := 0.U
 }.otherwise{// IPref last
   mem.io.req := true.B
   mem.io.addr := io.pref_addr
@@ -84,8 +73,6 @@ when(io.dReq){// Data first
   //set outputs to caches
   io.dataRead := mem.io.dataRead
   io.grantData := io.dReq
-  io.grantInst := !io.dReq && io.iReq
-  io.grantPref := !io.dReq && !io.iReq
 
 
   //test harness //TODO
@@ -97,6 +84,12 @@ when(io.dReq){// Data first
   mem.testHarness.imemSetup := testHarness.setupSignals
   testHarness.requestedAddress := mem.testHarness.requestedAddressIMEM
 
-  // printf(p"Arbiter Instr: iAddr: ${io.iAddr}, iReq: ${io.iReq}, grantInst: ${io.grantInst}, dataRead: 0x${Hexadecimal(io.dataRead)}, memdataRead: 0x${Hexadecimal(mem.io.dataRead)}\n")
-  // printf(p"Arbiter Data:  dAddr: ${io.dAddr}, dReq: ${io.dReq}, grantData: ${io.grantData}, dataRead: 0x${Hexadecimal(io.dataRead)}, memdataRead: 0x${Hexadecimal(mem.io.dataRead)}\n")
+  when(io.grantData){
+    //printf(p"Arbiter Data:  dAddr: ${io.dAddr}, dReq: ${io.dReq}, grantData: ${io.grantData}, dataRead: 0x${Hexadecimal(io.dataRead)}, memdataRead: 0x${Hexadecimal(mem.io.dataRead)}\n")
+    
+  }.otherwise{
+    //printf(p"Arbiter Pref: prefAddr: ${io.pref_addr}, !grantData: ${!io.grantData}, dataRead: 0x${Hexadecimal(io.dataRead)}, memdataRead: 0x${Hexadecimal(mem.io.dataRead)}\n")
+   
+  }
+    
 }

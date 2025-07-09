@@ -69,7 +69,7 @@ class DICachesAndMemory (I_memoryFile: String, cacheOnly : Boolean = true) exten
   icache.io.prefData   :=   ipref.io.result
 
   ipref.io.mem_instr := arbiter.io.dataRead
-  ipref.io.grantPref := arbiter.io.grantPref
+  ipref.io.grantData := arbiter.io.grantData
   arbiter.io.pref_addr := ipref.io.mem_addr
 
 
@@ -88,12 +88,11 @@ class DICachesAndMemory (I_memoryFile: String, cacheOnly : Boolean = true) exten
   arbiter.io.dAddr := dcache.io.mem_data_addr
   arbiter.io.dData := dcache.io.mem_data_in
   arbiter.io.dWrite := dcache.io.mem_write_en
-  arbiter.io.dReq := dcache.io.mem_read_en || dcache.io.mem_write_en
+  arbiter.io.dReq := false.B//!dcache.io.mem_read_en || dcache.io.mem_write_en
   //Outputs
   dcache.io.mem_data_out := arbiter.io.dataRead
   dcache.io.mem_granted:= arbiter.io.grantData
   icache.io.mem_data_out := arbiter.io.dataRead
-  icache.io.mem_granted:= arbiter.io.grantInst
 
   //xxxxxxxxxxx
   //Data
@@ -120,5 +119,6 @@ class DICachesAndMemory (I_memoryFile: String, cacheOnly : Boolean = true) exten
 
 
    // printf(p"MEM icache.io.data_addr: ${icache.io.data_addr}, icache.io.data_out: 0x${Hexadecimal(icache.io.data_out.asUInt)}\n")
+  //  printf(p"MEM io.instr_addr: ${io.instr_addr}\n")
 
 }
