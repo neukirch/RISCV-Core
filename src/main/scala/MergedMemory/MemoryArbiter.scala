@@ -73,6 +73,9 @@ val io = IO(new Bundle {
   //set outputs to caches
   io.dataRead := mem.io.dataRead
   io.grantData := io.dReq
+  //printf(p"ARBITER io.grantData: ${io.grantData}, io.dReq: ${io.dReq}\n")
+  //printf(p"\n")
+
 
 
   //test harness //TODO

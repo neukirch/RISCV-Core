@@ -73,32 +73,38 @@ class EX extends Module {
   when(io.rs1Select === 1.asUInt(2.W)){
     alu_operand1         := io.ALUresultEXB
     ResolveBranch.src1   := io.ALUresultEXB
+   printf(p"EX rs1_select = 1 alu_operand1: 0x${Hexadecimal(io.ALUresultEXB)}\n")
   }
   .elsewhen(io.rs1Select === 2.asUInt(2.W)){
     alu_operand1         := io.ALUresultMEMB
     ResolveBranch.src1   := io.ALUresultMEMB
+   printf(p"EX rs1_select = 2 alu_operand1: 0x${Hexadecimal(io.ALUresultMEMB)}\n")
   }
   .otherwise{
     alu_operand1         := io.rs1
     ResolveBranch.src1   := io.rs1
+   printf(p"EX rs1_select = otherwise alu_operand1: 0x${Hexadecimal(io.rs1)}\n")
   }
 
 
   when(io.rs2Select === 1.asUInt(2.W)){
     alu_operand2         := io.ALUresultEXB
     ResolveBranch.src2   := io.ALUresultEXB
+   printf(p"EX rs2_select = 1 alu_operand1: 0x${Hexadecimal(io.ALUresultEXB)}\n")
   }
   .elsewhen(io.rs2Select === 2.asUInt(2.W)){
     alu_operand2         := io.ALUresultMEMB
     ResolveBranch.src2   := io.ALUresultMEMB
+   printf(p"EX rs2_select = 2 alu_operand2: 0x${Hexadecimal(io.ALUresultMEMB)}\n")
   }
   .otherwise{
     alu_operand2         := io.rs2
     ResolveBranch.src2   := io.rs2
+   printf(p"EX rs2_select = otherwise alu_operand2: 0x${Hexadecimal(io.rs2)}\n")
   }
     //Operand 1, 2nd Mux
   when(io.op1Select === op1sel.PC){
-  ALU.src1    := io.PC
+    ALU.src1    := io.PC
   }.otherwise{
     ALU.src1    := alu_operand1
   }
@@ -107,6 +113,7 @@ class EX extends Module {
     ALU.src2    := alu_operand2
   }.otherwise{
     ALU.src2    := io.immData
+   //printf(p"EX alu_operand2 immediate: 0x${Hexadecimal(io.immData)} as signed int: ${io.immData.asSInt}\n")
   }
 
 
@@ -149,4 +156,9 @@ class EX extends Module {
     io.updatePrediction := false.B
   }
   io.outPCplus4 := PCplus4
+
+
+
+  //printf(p"EX alu_operand1: 0x${Hexadecimal(alu_operand1)}, alu_operand2: 0x${Hexadecimal(alu_operand2)}\n")
+  printf(p"\n")
 }

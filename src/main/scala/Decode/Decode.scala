@@ -57,7 +57,7 @@ class Decode extends Module {
 
     // Imm instructions
     LUI    -> List(N,        Y,        N,       N,        N,       N,    branch_types.DC, rs1,       imm,       UTYPE,        ALUOps.LUI),
-    AUIPC  -> List(N,        Y,        N,       N,        N,       N,    branch_types.DC, rs1,       imm,       UTYPE,        ALUOps.ADD),
+    AUIPC  -> List(N,        Y,        N,       N,        N,       N,    branch_types.DC, rs1,       imm,       UTYPE,        ALUOps.AUIPC),//!ALUOps.ADD),
 
     // Shifts
     SRA    -> List(N,        Y,        N,       N,        N,       N,    branch_types.DC, rs1,       rs2,       ImmFormat.DC, ALUOps.SRA),
@@ -121,11 +121,7 @@ class Decode extends Module {
   io.immType    := decodedControlSignals(9)
   io.ALUop      := decodedControlSignals(10)
 
-  when(decodedControlSignals(10) === ALUOps.LUI){
-  //printf(p"DECODE LUI\n")
-  }
   
-
-
-//printf(p"Decode op1Select: 0x${Hexadecimal(decodedControlSignals(7))}, op2Select: 0x${Hexadecimal(decodedControlSignals(8))}, ALUop: 0x${Hexadecimal(decodedControlSignals(10))}\n")
+  //printf(p"Decode WriteToReg: ${Hexadecimal(decodedControlSignals(1))}, WriteToMem: ${Hexadecimal(decodedControlSignals(3))}, ALUop: ${decodedControlSignals(10)}, src1: 0x${Hexadecimal(decodedControlSignals(7))}, src2: 0x${Hexadecimal(decodedControlSignals(8))}\n")
+  //printf(p"\n")
 }

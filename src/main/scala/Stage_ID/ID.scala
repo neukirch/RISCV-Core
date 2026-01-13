@@ -49,6 +49,9 @@ class ID extends Module
       val readData1            = Output(UInt())
       val readData2            = Output(UInt())
 
+
+
+      val inPC              = Input(UInt(32.W))
     }
   )
 
@@ -123,6 +126,11 @@ class ID extends Module
     DC    -> io.instruction.immediateIType
   )
 
+  // printf(p"ID instruction: 0x${Hexadecimal(io.instruction.asUInt)}, readData1: 0x${Hexadecimal(bypassRs1.outData)}, readData2: 0x${Hexadecimal(bypassRs1.outData)}\n")
+  // printf(p"bypassRs1.registerData: 0x${Hexadecimal(registers.io.readData1)}, bypassRs1.writeData: 0x${Hexadecimal(io.registerWriteData)}\n")
+  // printf(p"bypassRs2.registerData: 0x${Hexadecimal(registers.io.readData2)}, bypassRs2.writeData: 0x${Hexadecimal(io.registerWriteData)}\n")
+  // printf(p"\n")
+
   //Set immData
   immData := MuxLookup(io.immType, 0.S(32.W), ImmOpMap)
 
@@ -130,6 +138,11 @@ class ID extends Module
   //Sign extend immdata
   when(decoder.ALUop === ALUOps.LUI){
       io.readData1 := 0.U(32.W)
+      io.immData := immData.asUInt
+      //io.ALUop   := ALUOps.ADD
+  //printf(p"ID instruction: 0x${Hexadecimal(io.instruction.asUInt)}, LUI readData1: 0x${Hexadecimal(io.readData1.asUInt)}, immData: 0x${Hexadecimal(immData.asUInt)}\n")
+  }.elsewhen(decoder.ALUop === ALUOps.AUIPC){
+      io.readData1 := io.inPC
       io.immData := immData.asUInt
       //io.ALUop   := ALUOps.ADD
   //printf(p"ID instruction: 0x${Hexadecimal(io.instruction.asUInt)}, LUI readData1: 0x${Hexadecimal(io.readData1.asUInt)}, immData: 0x${Hexadecimal(immData.asUInt)}\n")

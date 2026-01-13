@@ -94,6 +94,7 @@ class top_MC(BinaryFile: String, DataFile: String) extends Module {
   IFBarrier.inBTBTargetPredict := IF.io.btbTargetPredict
 
     //Decode stage
+  ID.io.inPC                  := IFBarrier.outCurrentPC //!NEU
   ID.io.instruction           := IFBarrier.outInstruction
   ID.io.registerWriteAddress  := MEMBarrier.outRd
   ID.io.registerWriteEnable   := MEMBarrier.outControlSignals.regWrite
@@ -104,7 +105,7 @@ class top_MC(BinaryFile: String, DataFile: String) extends Module {
   IDBarrier.inBranchType       := ID.io.branchType
   IDBarrier.inPC               := IFBarrier.outCurrentPC
   IDBarrier.flush              := HzdUnit.io.flushE
-  IDBarrier.stall              := HzdUnit.io.stall_membusy || HzdUnit.io.stall   //!
+  IDBarrier.stall              := HzdUnit.io.stall_membusy || HzdUnit.io.stall  
   IDBarrier.inOp1Select        := ID.io.op1Select
   IDBarrier.inOp2Select        := ID.io.op2Select
   IDBarrier.inImmData          := ID.io.immData
@@ -230,7 +231,9 @@ class top_MC(BinaryFile: String, DataFile: String) extends Module {
 
 
     //! Added for debugging
-  //printf(p"\n")
+  printf(p"\n")
+  printf(p"--------------------------------------------------------------------------\n")
+  printf(p"\n")
   printf(p"\n")
   
   //printf(p"------------------------------------------------------------------------\n")
@@ -263,4 +266,9 @@ class top_MC(BinaryFile: String, DataFile: String) extends Module {
   //printf(p"------------------------------------BTB------------------------------------\n")
   //printf(p"BTB IF.io.btbHit: ${IF.io.btbHit}, IDBarrier.inBTBHit: ${IDBarrier.inBTBHit}, EX.io.btbHit: ${EX.io.btbHit}\n")
 
+  //printf(p"------------------------------------MEMBarrier------------------------------------\n")
+  printf(p"MEMBarrier outMEMData: 0x${Hexadecimal(MEMBarrier.outMEMData)}, outALUResult: 0x${Hexadecimal(MEMBarrier.outALUResult)}\n")
+
+
+  printf(p"\n")
 }

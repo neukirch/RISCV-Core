@@ -13,14 +13,26 @@ class main_tb extends AnyFlatSpec with ChiselScalatestTester {
     //test(new RISCV_TOP("src/test/programs/test0")).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
     test(new RISCV_TOP("src/main/resources/mem.hex")).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
       dut.clock.setTimeout(0)
-      for(i <- 0 until 300){//add 1150, beq 800, bge  800, bgeu 850, blt 720, bltu 760, bne 730
-      //add pc 373->379,380.... end success, 374 fail
-      //beq pc 239->245,246.... end success, 242 fail
-      //bge pc 263->269,270.... end success, 264 fail
-      //bgeu pc 276->282,283.... end success, 277 fail
-      //blt pc 239->245,246.... end success, 240 fail
-      //bltu pc 252->258,259.... end success, 253 fail
-      //bne pc 240->246,247.... end success, 241 fail
+      for(i <- 0 until 20){//add 1150, beq 800, bge  800, bgeu 850, blt 720, bltu 760, bne 730
+      //add   pc 373->379,380.... end success, 374 fail
+      //beq   pc 239->245,246.... end success, 242 fail
+      //bge   pc 263->269,270.... end success, 264 fail
+      //bgeu  pc 276->282,283.... end success, 277 fail
+      //blt   pc 239->245,246.... end success, 240 fail
+      //bltu  pc 252->258,259.... end success, 253 fail
+      //bne   pc 240->246,247.... end success, 241 fail
+
+
+      //lb 
+      //lb    pc 211 -> 217... end success, 212 fail               ----- fails
+      //lbu   pc  -> ... end success,  fail               ----- fails
+      //lh    pc  -> ... end success,  fail               ----- fails
+      //lhu   pc  -> ... end success,  fail               ----- fails
+      //lui   pc  -> ... end success,  fail               ----- fails
+      //lw    pc  227 -> 232... end success, 228 fail               ----- fails
+      //sb    pc  -> ... end success,  fail               ----- fails
+      //sh    pc  -> ... end success,  fail               ----- fails
+      //sw    pc  -> ... end success,  fail               ----- fails
         dut.clock.step()
       }
 

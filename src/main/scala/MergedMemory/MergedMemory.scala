@@ -69,10 +69,12 @@ class UnifiedMemory(memFile: String) extends Module {
   // Write to memory
   when(writeEnable) {
     memory(addrSource >> 2) := wdataSource
-    
+    printf(p"memory write 0x${Hexadecimal(wdataSource)} at 0x${Hexadecimal(addrSource >> 2)}, not shifted: 0x${Hexadecimal(addrSource)}\n")
   }.otherwise{
   // Read from memory
     io.dataRead := memory(addrSource >> 2)
+    printf(p"memory read 0x${Hexadecimal(memory(addrSource >> 2))} at 0x${Hexadecimal(addrSource >> 2)}, not shifted: 0x${Hexadecimal(memory(addrSource))} at 0x${Hexadecimal(addrSource)}\n")
+
   }
 
 
@@ -83,6 +85,13 @@ class UnifiedMemory(memFile: String) extends Module {
   testHarness.testUpdatesDMEM.writeAddress := addrSource
 
   testHarness.requestedAddressIMEM := addrSource
+  // printf(p"memory at 0x${Hexadecimal(addrSource >> 2)}: 0x${Hexadecimal(memory(addrSource >> 2))}\n")
+  // printf(p"memory at 0x${Hexadecimal(addrSource)}: 0x${Hexadecimal(memory(addrSource))}\n")
+  // printf(p"memory t4 at 4080 0x${Hexadecimal(memory(4080))}\n")
+  // printf(p"memory t5 at 8192 0x${Hexadecimal(memory(8192))}\n")
+  // printf(p"memory t4 at 4080 >> 2 0x${Hexadecimal(memory(4080 >> 2))}, t5 at 8192 >> 2 0x${Hexadecimal(memory(8192 >> 2))}\n")
+  // printf(p"memory actual read 0x${Hexadecimal(io.dataRead)}\n")
+  printf(p"\n")
 
 
 }

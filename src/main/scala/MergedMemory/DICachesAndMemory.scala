@@ -74,13 +74,13 @@ class DICachesAndMemory (I_memoryFile: String, cacheOnly : Boolean = true) exten
 
 
 
-  //! Added for Loop_Test_0
+  //Added for Loop_Test_0
   io.pcOut := icache.io.pcOut
 
 
   icache.io.flushed := io.flushed
 
-  //!Arbiter Connections
+  //Arbiter Connections
   //Instruction
   arbiter.io.iAddr := icache.io.mem_data_addr
   arbiter.io.iReq := icache.io.mem_read_en
@@ -88,7 +88,16 @@ class DICachesAndMemory (I_memoryFile: String, cacheOnly : Boolean = true) exten
   arbiter.io.dAddr := dcache.io.mem_data_addr
   arbiter.io.dData := dcache.io.mem_data_in
   arbiter.io.dWrite := dcache.io.mem_write_en
-  arbiter.io.dReq := false.B//!dcache.io.mem_read_en || dcache.io.mem_write_en
+
+
+
+  //TODO
+  //TODO arbiter.io.dReq := false.B//!dcache.io.mem_read_en || dcache.io.mem_write_en
+  arbiter.io.dReq := dcache.io.mem_read_en || dcache.io.mem_write_en
+  //printf(p"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx DICachesAndMemory Changed here xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n")
+  //TODO
+
+
   //Outputs
   dcache.io.mem_data_out := arbiter.io.dataRead
   dcache.io.mem_granted:= arbiter.io.grantData
@@ -116,6 +125,10 @@ class DICachesAndMemory (I_memoryFile: String, cacheOnly : Boolean = true) exten
 
   arbiter.testHarness.setupSignals := testHarness.setupSignals
   testHarness.requestedAddress := arbiter.testHarness.requestedAddress
+
+  //printf(p"MEM DCACHEbusy: ${dcache.io.busy}, ICACHEbusy: ${icache.io.busy}\n")
+  //printf(p"\n")
+
 
 
 }

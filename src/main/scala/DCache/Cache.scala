@@ -64,11 +64,11 @@ class Cache (CacheFile: String, read_only: Boolean = false) extends Module{
 
   val compareReg = RegInit(false.B)
 
-
   switch(stateReg) {
     
     
     is(idle) {
+      printf(p"DCache idle\n")
       when(io.read_en || io.write_en.getOrElse(false.B)) {
         compareWire := true.B
         write_en_wire := io.write_en.getOrElse(false.B)
@@ -113,6 +113,7 @@ class Cache (CacheFile: String, read_only: Boolean = false) extends Module{
             io.data_out := data_element_wire(31, 0)
             
           }
+          printf(p"Cache output ${io.data_out}\n")
           if(!read_only) {
             when(write_en_wire || write_en_reg) {
               val temp = Wire(Vec(58, Bool()))
@@ -154,6 +155,7 @@ class Cache (CacheFile: String, read_only: Boolean = false) extends Module{
     }
 
     is(writeback) {
+      printf(p"DCache writeback\n")
       io.mem_write_en := true.B
       io.mem_read_en := false.B
       when(io.mem_granted)
@@ -171,8 +173,8 @@ class Cache (CacheFile: String, read_only: Boolean = false) extends Module{
     }
 
     is(allocate) {
-      
       when(statecount) {
+        printf(p"DCache allocate 2\n")
         statecount := false.B
         io.mem_read_en := false.B
         val temp = Wire(Vec(58, Bool()))
@@ -190,6 +192,7 @@ class Cache (CacheFile: String, read_only: Boolean = false) extends Module{
         compareReg := true.B
         stateReg := idle
       }.otherwise {
+        printf(p"DCache allocate 1\n")
         
         io.mem_read_en := true.B
         io.mem_write_en := false.B
@@ -202,5 +205,5 @@ class Cache (CacheFile: String, read_only: Boolean = false) extends Module{
     }
 
   }
-
+  //printf(p"\n")
 }

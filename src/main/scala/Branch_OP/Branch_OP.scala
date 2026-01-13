@@ -83,7 +83,7 @@ class Branch_OP extends Module {
     }
     is(DC) {
       io.branchTaken := (0.U)
-        printf(p"DC\n")
+        //printf(p"DC\n")
     }
   }
 

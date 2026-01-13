@@ -31,6 +31,7 @@ object ALUOps {
   val COPY_B = 11.U(5.W)
   val DC     = 15.U(5.W)
   val LUI    = 25.U(5.W)
+  val AUIPC    = 24.U(5.W) //!
 }
 
 object MDUOps {

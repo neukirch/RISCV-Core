@@ -68,13 +68,21 @@ class registerFile extends Module
   when(writeEnable){
     when(writeAddress =/= 0.U){
       registerFile(writeAddress) := writeData
+     //printf(p"registerFile writeData: 0x${Hexadecimal(writeData)} at writeAddress: ${writeAddress / 4.U}\n")
     }
   }
+
 
 
   io.readData1 := 0.U
   io.readData2 := 0.U
   when(readAddress1 =/= 0.U){ io.readData1 := registerFile(readAddress1) }
+   //printf(p"registerFile read at readAddress1 0x${Hexadecimal(readAddress1)}: 0x${Hexadecimal(io.readData1)}\n")}
   when(readAddress2 =/= 0.U){ io.readData2 := registerFile(readAddress2) }
+   //printf(p"registerFile read at readAddress2 0x${Hexadecimal(readAddress2)}: 0x${Hexadecimal(io.readData2)}\n")}
+
+
+  //printf(p"registerFile ra 0x${Hexadecimal(registerFile(1))}, t4 0x${Hexadecimal(registerFile(29))}, t5 0x${Hexadecimal(registerFile(30))}, gp 0x${Hexadecimal(registerFile(3))}\n")
+  //printf(p"\n")
 
 }

@@ -48,7 +48,8 @@ class ALU extends Module {
 
 
   switch(io.ALUop){
-    is(ADD){ io.aluRes := (io.src1 + io.src2)}  // Add
+    is(ADD){ io.aluRes := (io.src1 + io.src2)
+      printf(p"ADD io.src1 0x${Hexadecimal(io.src1)}, io.src2 0x${Hexadecimal(io.src2)}, io.aluRes 0x${Hexadecimal(io.aluRes)}\n")}  // Add
     is(SUB){ io.aluRes := (io.src1 - io.src2)}  // Sub
 
     is(SLL){ io.aluRes := (io.src1 << shamt)}   // SLL, SLLI
@@ -65,10 +66,14 @@ class ALU extends Module {
     is(INC_4){ io.aluRes := io.src1 + 4.U}      // PC increment
     is(COPY_B){ io.aluRes := io.src2}           //Pass B
 
-    is(LUI){ io.aluRes := (0.U + io.src2)}      // LUI
+    is(LUI){ io.aluRes := (0.U + io.src2)
+      printf(p"LUI operand1: 0.U, io.src2: 0x${Hexadecimal(io.src2)}, io.aluRes: 0x${Hexadecimal(io.aluRes)}\n")} // LUI
+    is(AUIPC){ io.aluRes := (io.src1 + io.src2)
+      printf(p"AUIPC io.src1 0x${Hexadecimal(io.src1)}, io.src2: 0x${Hexadecimal(io.src2)}, io.aluRes: 0x${Hexadecimal(io.aluRes)}\n")}      // AUIPC //!
     is(DC){ io.aluRes := io.src1 - io.src2}
 
   }
+    printf(p"\n")
 
 }
 
